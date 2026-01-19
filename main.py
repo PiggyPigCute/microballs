@@ -1,15 +1,15 @@
 import discord
-
 from discord.ext import commands
 import random
 import time
 import re
 
 # constants
-PROBA = 0.8  # probability of sending a ball when a msg is sent
-WAIT_DURATION = 20  # time (in seconds) after a msg is sent, during this time the msg are ignored
+PROBA = 0.7  # probability of sending a ball when a msg is sent
+WAIT_DURATION = 6  # time (in seconds) after a msg is sent, during this time the msg are ignored
+EMOJI_GUILD_ID = 1462239696418635840  # id of the guild where the the emojis are stored (here, the MicroBall guild)
 
-# reading csv
+# reading-write csv
 def read_csv(path,sep=";"):
     dico = {}
     with open(path,'r',encoding="utf-8") as file:
@@ -36,13 +36,20 @@ def write_csv(path,dico:dict,keys,sep=";"):
     with open(path,'w',encoding="utf-8") as file:
         file.write(text)
 
+# variables
 balls = read_csv(r"./balls.csv")
 balls_id = list(balls.keys())
 players_keys = ["player_id"]+balls_id
 spawn_channels = read_csv(r"./channels.csv")
 players = read_csv(r"./players.csv")
+emojis = {} # set on on_ready()
 
+# technical constants
+mini_digits = {'1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉'}
+diacritics = {"a":"àâä","c":"ç","e":"éèêï","i":"îï","o":"ôö","u":"ûü"}
+letters = "abcdefghijklmnopqrstuvwxyz"
 
+# time
 current_time = time.time()
 last_triggers = {int(guild_id):current_time for guild_id in spawn_channels}
 
@@ -58,8 +65,6 @@ bot = commands.Bot(command_prefix="/", intents=discord.Intents.default(), help_c
 
 # functions
 def normalize_text(text):
-    diacritics = {"a":"àâä","c":"ç","e":"éèêï","i":"îï","o":"ôö","u":"ûü"}
-    letters = "abcdefghijklmnopqrstuvwxyz"
     result = ""
     for c in text.lower():
         if c in letters:
@@ -130,13 +135,16 @@ class CatchView(discord.ui.View):
                 players[catcher_id][ball] = ""
             players[catcher_id][ball_id] = "1"
         write_csv(r"./players.csv",players,players_keys)
+        print(" 🪵 🤚  catch │ player:",catcher.display_name,"│ ball:",ball_id,"│ guild:",self.msg.guild.name)
         
-    def set_msg(self,msg):
+    def set_msg(self,msg:discord.Message):
         self.msg = msg
 
 @bot.event
 async def on_ready():
     await bot.tree.sync()
+    for emoji in bot.get_guild(EMOJI_GUILD_ID).emojis:
+        emojis[emoji.name] = "<:"+emoji.name+":"+str(emoji.id)+"> "
     print("Let's go !")
 
 @bot.event
@@ -173,7 +181,7 @@ async def on_message(message:discord.Message):
 
 @bot.tree.command(name="set-channel", description="Exécuter cette commande dans le salon où vous voulez que les MicroBalls apparaissent")
 async def set_channel(inter:discord.Interaction):
-    inter.response.defer(ephemeral=True)
+    await inter.response.defer(ephemeral=True)
     if inter.user.guild_permissions.manage_channels:
         guild_id = str(inter.guild.id)
         channel_id = str(inter.channel.id)
@@ -190,13 +198,31 @@ async def set_channel(inter:discord.Interaction):
 
 @bot.tree.command(name="info", description="Obtenir des informations sur le bot MicroBalls")
 async def info(inter:discord.Interaction):
-    inter.response.defer(ephemeral=True)
+    await inter.response.defer(ephemeral=True)
     guild_id = str(inter.guild.id)
     if guild_id in spawn_channels:
         text = "Dans le serveur *"+inter.guild.name+"*, c'est le salon <#"+spawn_channels[guild_id]["channel_id"]+"> qui a été choisi pour faire apparaître les MicroBalls. Pour changer le salon d'apparission, vous pouvez utiliser la commande `/set-channel` dans le salon voulu"
     else:
         text = "Pour l'instant dans le serveur *"+inter.guild.name+"*, aucun salon n'a été sélectionné pour faire apparaître les MicroBalls. Utilisez la commande `/set-channel` dans le salon voulu pour les faire apparaître !"
     await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.yellow(),title="MicroBalls",description="Salut, je suis le bot **MicroBalls**, créé par **PiggyPig** (`@piggypig`).\n\nLe principe est simple, lorsque le serveur est actif des *MicroBalls* (CountryBalls de micronations) apparaissent. Les membres du serveurs ont alors 5 minutes pour essayer d'attraper la MicroBall en cliquant sur le bouton et en inscrivant le nom de la micronation (en français ou en ernestien).\n\nVous pouvez faire `/collection` pour obtenir votre collection et voir quelle MicroBalls il vous manque. Vous pouvez aussi faire `/give` pour donner une MicroBall à quelqu'un d'autre.\n\n"+text+" (vous devez avoir la permission *manage_channels*)."),ephemeral=True)
+
+@bot.tree.command(name="collection", description="Regarde la liste des MicroBalls que tu as")
+async def collection(inter:discord.Interaction):
+    await inter.response.defer()
+    player_id = str(inter.user.id)
+    if player_id in players:
+        player = players[player_id]
+        caught_balls, uncaught_balls = [], []
+        for ball_id in balls:
+            if ball_id in player and player[ball_id] != "":
+                caught_balls.append((int(player[ball_id]),emojis[ball_id]+("ₓ"+"".join([mini_digits[c] for c in player[ball_id]]) if player[ball_id] != "1" else "")))
+            else:
+                uncaught_balls.append(emojis[ball_id])
+        caught_balls.sort(key=lambda x: -int(x[0]))
+        text = "MicroBalls attrapées :\n# " + " ".join([x[1] for x in caught_balls]) + "\n\nMicroBalls à attraper :\n### "+" ".join(uncaught_balls)
+    else:
+        text = "Tu n'as attrapé aucune MicroBall pour l'instant, voici la liste des MicroBalls existantes :\n### " + " ".join([emojis[ball] for ball in balls])
+    await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.yellow(),title="Collection de **"+inter.user.display_name+"**",description=text))
 
 # go !
 with open(r"./token.lock", 'r') as file:
