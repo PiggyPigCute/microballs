@@ -13,11 +13,11 @@ EMOJI_GUILD_ID = 1462239696418635840  # id of the guild where the the emojis are
 def read_csv(path,sep=";"):
     dico = {}
     with open(path,'r',encoding="utf-8") as file:
-        φ = file.read().split('\n')
-    keys = φ[0].split(sep)
-    for λ in φ[1:]:
+        lines = file.read().split('\n')
+    keys = lines[0].split(sep)
+    for line in lines[1:]:
         item = {}
-        split = λ.split(sep)
+        split = line.split(sep)
         if len(split)>1:
             for i in range(len(split)):
                 item[keys[i]] = split[i]
@@ -28,9 +28,9 @@ def write_csv(path,dico:dict,keys,sep=";"):
     text = sep.join(keys)
     for mini_dico in dico.values():
         text += '\n'
-        for χ in keys:
-            if χ in mini_dico:
-                text += mini_dico[χ]
+        for key in keys:
+            if key in mini_dico:
+                text += mini_dico[key]
             text += sep
         text = text[:-1]
     with open(path,'w',encoding="utf-8") as file:
