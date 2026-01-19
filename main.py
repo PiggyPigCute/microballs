@@ -1,14 +1,13 @@
-
 import discord
+
 from discord.ext import commands
-from discord import app_commands, Webhook
 import random
 import time
 import re
 
 # constants
 PROBA = 0.8  # probability of sending a ball when a msg is sent
-WAIT_DURATION = 1  # time (in seconds) after a msg is sent, during this time the msg are ignored
+WAIT_DURATION = 20  # time (in seconds) after a msg is sent, during this time the msg are ignored
 
 # reading csv
 def read_csv(path,sep=";"):
@@ -39,6 +38,7 @@ def write_csv(path,dico:dict,keys,sep=";"):
 
 balls = read_csv(r"./balls.csv")
 balls_id = list(balls.keys())
+players_keys = ["player_id"]+balls_id
 spawn_channels = read_csv(r"./channels.csv")
 players = read_csv(r"./players.csv")
 
@@ -49,9 +49,9 @@ last_triggers = {int(guild_id):current_time for guild_id in spawn_channels}
 # bot initialization
 class CustomHelpCommand(commands.HelpCommand):
     async def send_bot_help(self, mapping):
-        pass
+        ...
     async def send_command_help(self, command):
-        pass
+        ...
 
 bot = commands.Bot(command_prefix="/", intents=discord.Intents.default(), help_command=CustomHelpCommand())
 
@@ -89,7 +89,7 @@ class BoxModal(discord.ui.Modal):
 
     async def on_submit(self, inter:discord.Interaction):
         if self.caught_view.caught:
-            await inter.response.send_message("Désolé **"+inter.user.display_name+"**, la MicroBall a déjà été attrapée par **"+self.caught_view.caughter_name+"**")
+            await inter.response.send_message("Désolé **"+inter.user.display_name+"**, la MicroBall a déjà été attrapée par **"+self.caught_view.catcher_name+"**")
             return
 
         awnser = inter.data["components"][0]["components"][0]["value"]
@@ -98,25 +98,38 @@ class BoxModal(discord.ui.Modal):
             await inter.response.send_message("Désolé **"+inter.user.display_name+"**, ce n'est pas le bon nom")
         else:
             await inter.response.send_message("Bravo <@"+str(inter.user.id)+">, tu as capturé **"+ball["nom_fr"]+"** !")
-            await self.caught_view.catch(inter.user.display_name)
+            await self.caught_view.catch(inter.user)
 
 class CatchView(discord.ui.View):
     def __init__(self, ball_id):
         super().__init__(timeout=None)
         self.ball_id = ball_id
         self.caught = False
-        self.caughter_name = None
+        self.catcher_name = None
         self.msg = None
 
     @discord.ui.button(label="Attraper !", style=discord.ButtonStyle.primary, custom_id="catch")
     async def open_modal(self, inter:discord.Interaction, button: discord.ui.Button):
         await inter.response.send_modal(BoxModal(self.ball_id,self))
     
-    async def catch(self, caughter_name):
+    async def catch(self, catcher:discord.Member):
         self.caught = True
-        self.caughter_name = caughter_name
+        self.catcher_name = catcher.display_name
         self.disabled = True
         await self.msg.edit(view=None)
+        catcher_id, ball_id = str(catcher.id), str(self.ball_id)
+        if catcher_id in players:
+            player = players[catcher_id]
+            if ball_id in player and player[ball_id] != "":
+                player[ball_id] = str(1+int(player[ball_id]))
+            else:
+                player[ball_id] = "1"
+        else:
+            players[catcher_id] = {"player_id":catcher_id}
+            for ball in balls_id:
+                players[catcher_id][ball] = ""
+            players[catcher_id][ball_id] = "1"
+        write_csv(r"./players.csv",players,players_keys)
         
     def set_msg(self,msg):
         self.msg = msg
@@ -124,10 +137,10 @@ class CatchView(discord.ui.View):
 @bot.event
 async def on_ready():
     await bot.tree.sync()
-    print("Let's go")
+    print("Let's go !")
 
 @bot.event
-async def on_message(message:discord.message.Message):
+async def on_message(message:discord.Message):
     if message.author.bot: return
 
     int_guild_id = message.guild.id
@@ -159,7 +172,7 @@ async def on_message(message:discord.message.Message):
         view.set_msg(msg)
 
 @bot.tree.command(name="set-channel", description="Exécuter cette commande dans le salon où vous voulez que les MicroBalls apparaissent")
-async def set_channel(inter:discord.interactions.Interaction):
+async def set_channel(inter:discord.Interaction):
     inter.response.defer(ephemeral=True)
     if inter.user.guild_permissions.manage_channels:
         guild_id = str(inter.guild.id)
@@ -176,7 +189,7 @@ async def set_channel(inter:discord.interactions.Interaction):
         print(" 🪵 🤐 set-channel no permission │ guild:",inter.guild.name,"│ user:",inter.user.name)
 
 @bot.tree.command(name="info", description="Obtenir des informations sur le bot MicroBalls")
-async def info(inter:discord.interactions.Interaction):
+async def info(inter:discord.Interaction):
     inter.response.defer(ephemeral=True)
     guild_id = str(inter.guild.id)
     if guild_id in spawn_channels:
@@ -184,11 +197,6 @@ async def info(inter:discord.interactions.Interaction):
     else:
         text = "Pour l'instant dans le serveur *"+inter.guild.name+"*, aucun salon n'a été sélectionné pour faire apparaître les MicroBalls. Utilisez la commande `/set-channel` dans le salon voulu pour les faire apparaître !"
     await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.yellow(),title="MicroBalls",description="Salut, je suis le bot **MicroBalls**, créé par **PiggyPig** (`@piggypig`).\n\nLe principe est simple, lorsque le serveur est actif des *MicroBalls* (CountryBalls de micronations) apparaissent. Les membres du serveurs ont alors 5 minutes pour essayer d'attraper la MicroBall en cliquant sur le bouton et en inscrivant le nom de la micronation (en français ou en ernestien).\n\nVous pouvez faire `/collection` pour obtenir votre collection et voir quelle MicroBalls il vous manque. Vous pouvez aussi faire `/give` pour donner une MicroBall à quelqu'un d'autre.\n\n"+text+" (vous devez avoir la permission *manage_channels*)."),ephemeral=True)
-
-
-# @bot.tree.command(name="collection", description="Montre ta collection de MicroBalls")
-# async def collection(inter:discord.integrations.Integration):
-#     player_id = str(inter.user.id)
 
 # go !
 with open(r"./token.lock", 'r') as file:
