@@ -204,7 +204,7 @@ async def info(inter:discord.Interaction):
         text = "Dans le serveur *"+inter.guild.name+"*, c'est le salon <#"+spawn_channels[guild_id]["channel_id"]+"> qui a été choisi pour faire apparaître les MicroBalls. Pour changer le salon d'apparission, vous pouvez utiliser la commande `/set-channel` dans le salon voulu"
     else:
         text = "Pour l'instant dans le serveur *"+inter.guild.name+"*, aucun salon n'a été sélectionné pour faire apparaître les MicroBalls. Utilisez la commande `/set-channel` dans le salon voulu pour les faire apparaître !"
-    await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.yellow(),title="MicroBalls",description="Salut, je suis le bot **MicroBalls**, créé par **PiggyPig** (`@piggypig`).\n\nLe principe est simple, lorsque le serveur est actif des *MicroBalls* (CountryBalls de micronations) apparaissent. Les membres du serveurs ont alors 5 minutes pour essayer d'attraper la MicroBall en cliquant sur le bouton et en inscrivant le nom de la micronation (en français ou en ernestien).\n\nVous pouvez faire `/collection` pour obtenir votre collection et voir quelle MicroBalls il vous manque. Vous pouvez aussi faire `/give` pour donner une MicroBall à quelqu'un d'autre.\n\n"+text+" (vous devez avoir la permission *manage_channels*)."),ephemeral=True)
+    await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.blue(),title="MicroBalls",description="Salut, je suis le bot **MicroBalls**, créé par **PiggyPig** (`@piggypig`).\n\nLe principe est simple, lorsque le serveur est actif des *MicroBalls* (CountryBalls de micronations) apparaissent. Les membres du serveurs ont alors 5 minutes pour essayer d'attraper la MicroBall en cliquant sur le bouton et en inscrivant le nom de la micronation (en français ou en ernestien).\n\nVous pouvez faire `/collection` pour obtenir votre collection et voir quelle MicroBalls il vous manque. Vous pouvez aussi faire `/give` pour donner une MicroBall à quelqu'un d'autre.\n\n"+text+" (vous devez avoir la permission *manage_channels*)."),ephemeral=True)
 
 @bot.tree.command(name="collection", description="Regarde la liste des MicroBalls que tu as")
 async def collection(inter:discord.Interaction):
@@ -222,7 +222,7 @@ async def collection(inter:discord.Interaction):
         text = "MicroBalls attrapées :\n# " + " ".join([x[1] for x in caught_balls]) + "\n\nMicroBalls à attraper :\n### "+" ".join(uncaught_balls)
     else:
         text = "Tu n'as attrapé aucune MicroBall pour l'instant, voici la liste des MicroBalls existantes :\n### " + " ".join([emojis[ball] for ball in balls])
-    await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.yellow(),title="Collection de **"+inter.user.display_name+"**",description=text))
+    await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.blue(),title="Collection de **"+inter.user.display_name+"**",description=text))
 
 # go !
 with open(r"./token.lock", 'r') as file:
