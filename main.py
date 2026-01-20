@@ -180,7 +180,7 @@ async def on_message(message:discord.Message):
         return
 
     rand = random.random()
-    await log_channel["channel"].send(" 🪵 🌿  trigger │ guild: "+message.guild.name+" │ rand: "+str(rand))
+    await log_channel["channel"].send("-# 🪵 🌿  trigger │ guild: "+message.guild.name+" │ rand: "+str(rand))
     if rand < PROBA:
         ball_id = random.choice(balls_id)
         with open("./img/"+balls[ball_id]["img"]+".png", "rb") as file:
