@@ -16,12 +16,13 @@ def read_csv(path,sep=";"):
         lines = file.read().split('\n')
     keys = lines[0].split(sep)
     for line in lines[1:]:
-        item = {}
-        split = line.split(sep)
-        if len(split)>1:
-            for i in range(len(split)):
-                item[keys[i]] = split[i]
-        dico[split[0]] = item
+        if len(line)>0:
+            item = {}
+            split = line.split(sep)
+            if len(split)>1:
+                for i in range(len(split)):
+                    item[keys[i]] = split[i]
+            dico[split[0]] = item
     return dico
 
 def write_csv(path,dico:dict,keys,sep=";"):
