@@ -141,7 +141,7 @@ class CatchView(discord.ui.View):
                 players[catcher_id][ball] = ""
             players[catcher_id][ball_id] = "1"
         write_csv(r"./players.csv",players,players_keys)
-        await log_channel["channel"].send(" 🪵 🤚  catch │ player: "+catcher.display_name+" │ ball: "+str(ball_id)+" │ guild: "+self.msg.guild.name)
+        await log_channel["channel"].send(" 🪵 🤚  catch │ player: "+catcher.name+" │ ball: "+str(ball_id)+" │ guild: "+self.msg.guild.name)
         
     def set_msg(self,msg:discord.Message):
         self.msg = msg
