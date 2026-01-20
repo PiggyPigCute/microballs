@@ -148,6 +148,10 @@ class CatchView(discord.ui.View):
 @bot.event
 async def on_ready():
     await bot.tree.sync()
+    print("┌── Guilds where MicroBalls is")
+    for guild in bot.guilds:
+        print("│",guild.name)
+    print("└──")
     for emoji in bot.get_guild(EMOJI_GUILD_ID).emojis:
         emojis[emoji.name] = "<:"+emoji.name+":"+str(emoji.id)+"> "
     print("Let's go !")
