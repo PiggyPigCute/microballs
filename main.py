@@ -5,8 +5,8 @@ import time
 import re
 
 # constants
-PROBA = 0.7  # probability of sending a ball when a msg is sent
-WAIT_DURATION = 6  # time (in seconds) after a msg is sent, during this time the msg are ignored
+PROBA = 0.07  # probability of sending a ball when a msg is sent
+WAIT_DURATION = 30  # time (in seconds) after a msg is sent, during this time the msg are ignored
 EMOJI_GUILD_ID = 1462239696418635840  # id of the guild where the the emojis are stored (here, the MicroBall guild)
 
 # reading-write csv
