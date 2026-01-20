@@ -205,8 +205,8 @@ async def set_channel(inter:discord.Interaction):
         await inter.followup.send("Dans le serveur **"+inter.guild.name+"**, les MicroBalls vont apparaître dans le salon **<#"+str(inter.channel.id)+">**", ephemeral=True)
         await log_channel["channel"].send(" 🪵 🔧 set-channel │ guild: "+inter.guild.name+" │ channel: "+inter.channel.name+" │ user: "+inter.user.name)
     else:
-        await inter.followup.send("⚠️ Il vous faut la permission **`manage-channels`** pour exécuter cette commande :)", ephemeral=True)
         await log_channel["channel"].send(" 🪵 🤐 set-channel no permission │ guild: "+inter.guild.name+" │ user: "+inter.user.name)
+        await inter.followup.send("⚠️ Il vous faut la permission **`manage-channels`** pour exécuter cette commande :)", ephemeral=True)
 
 @bot.tree.command(name="info", description="Obtenir des informations sur le bot MicroBalls")
 async def info(inter:discord.Interaction):
