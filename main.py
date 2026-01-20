@@ -151,11 +151,7 @@ async def on_ready():
     await bot.tree.sync()
     print("┌─ Guilds where MicroBalls is ─┐")
     for guild in bot.guilds:
-        name = normalize_text(guild.name)
-        if len(name)>29:
-            print("│",name)
-        else:
-            print("│ "+name+" "*(29-len(name))+"│")
+        print("│",guild.name)
     print("└──────────────────────────────┘")
     log_channel["channel"] = bot.get_guild(LOGS_GUILD_ID).get_channel(LOGS_CHANNEL_ID)
     for emoji in bot.get_guild(EMOJI_GUILD_ID).emojis:
