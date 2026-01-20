@@ -190,7 +190,7 @@ async def set_channel(inter:discord.Interaction):
         else:
             spawn_channels[guild_id] = {"guild_id":guild_id,"channel_id":channel_id}
         write_csv("./channels.csv",spawn_channels,("guild_id","channel_id","special"))
-        await inter.followup.send("Dans le serveur **"+inter.guild.name+"**, les MicroBalls vont apparaître dans le salon **"+inter.channel.name+"**", ephemeral=True)
+        await inter.followup.send("Dans le serveur **"+inter.guild.name+"**, les MicroBalls vont apparaître dans le salon **<#"+str(inter.channel.id)+">**", ephemeral=True)
         print(" 🪵 🔧 set-channel │ guild:",inter.guild.name,"│ channel:",inter.channel.name,"│ user:",inter.user.name)
     else:
         await inter.followup.send("⚠️ Il vous faut la permission **`manage-channels`** pour exécuter cette commande :)", ephemeral=True)
