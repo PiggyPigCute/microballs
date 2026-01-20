@@ -153,7 +153,7 @@ async def on_ready():
         if len(guild.name)>29:
             print("│",guild.name)
         else:
-            print("│ "+guild.name+" "*(29-len(guild))+"│")
+            print("│ "+guild.name+" "*(29-len(guild.name))+"│")
     print("└──────────────────────────────┘")
     for emoji in bot.get_guild(EMOJI_GUILD_ID).emojis:
         emojis[emoji.name] = "<:"+emoji.name+":"+str(emoji.id)+"> "
