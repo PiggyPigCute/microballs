@@ -105,7 +105,7 @@ class BoxModal(discord.ui.Modal):
         if re.match(ball["regex_fr"], awnser) != None:
             await inter.response.send_message("Bravo <@"+str(inter.user.id)+">, tu as capturé **"+ball["nom_fr"]+"** !")
             await self.caught_view.catch(inter.user)
-        elif re.match(ball["regex_ens"], awnser) != None:
+        elif "regex_ens" in ball and re.match(ball["regex_ens"], awnser) != None:
             await inter.response.send_message("Bravo <@"+str(inter.user.id)+">, tu as capturé **"+"".join([ernestien[c] for c in ball["nom_ens"]])+"** !\n-# (Ces caractères étranges sont de l'ernestien, la langue de l'Ernestie. "+inter.user.display_name+" vient d'attraper la MicroBall en écrivant le nom en ernestien)")
             await self.caught_view.catch(inter.user)
         else:
