@@ -5,8 +5,8 @@ import time
 import re
 
 # constants
-PROBA = 0.07  # probability of sending a ball when a msg is sent
-WAIT_DURATION = 30  # time (in seconds) after a msg is sent, during this time the msg are ignored
+PROBA = 0.7  # probability of sending a ball when a msg is sent
+WAIT_DURATION = 3  # time (in seconds) after a msg is sent, during this time the msg are ignored
 EMOJI_GUILD_ID = 1462239696418635840  # id of the guild where the the emojis are stored (here, the MicroBall guild)
 
 # reading-write csv
@@ -97,13 +97,16 @@ class BoxModal(discord.ui.Modal):
             await inter.response.send_message("Désolé **"+inter.user.display_name+"**, la MicroBall a déjà été attrapée par **"+self.caught_view.catcher_name+"**")
             return
 
-        awnser = inter.data["components"][0]["components"][0]["value"]
+        awnser = normalize_text(inter.data["components"][0]["components"][0]["value"])
         ball = balls[self.ball_id]
-        if re.match(ball["regex_fr"], normalize_text(awnser)) == None:
-            await inter.response.send_message("Désolé **"+inter.user.display_name+"**, ce n'est pas le bon nom")
-        else:
+        if re.match(ball["regex_fr"], awnser) != None:
             await inter.response.send_message("Bravo <@"+str(inter.user.id)+">, tu as capturé **"+ball["nom_fr"]+"** !")
             await self.caught_view.catch(inter.user)
+        elif re.match(ball["regex_ern"], awnser) != None:
+            await inter.response.send_message("Bravo <@"+str(inter.user.id)+">, tu as capturé **"+ball["nom_ern"]+"** !\n-# (Ces caractères étranges sont de l'ernestien, la langue de l'Ernestie. "+inter.user.display_name+" vient d'attraper la MicroBall en écrivant le nom en ernestien)")
+            await self.caught_view.catch(inter.user)
+        else:
+            await inter.response.send_message("Désolé **"+inter.user.display_name+"**, ce n'est pas le bon nom")
 
 class CatchView(discord.ui.View):
     def __init__(self, ball_id):
