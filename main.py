@@ -8,6 +8,8 @@ import re
 PROBA = 0.04  # probability of sending a ball when a msg is sent
 WAIT_DURATION = 10  # time (in seconds) after a msg is sent, during this time the msg are ignored
 EMOJI_GUILD_ID = 1462239696418635840  # id of the guild where the the emojis are stored (here, the MicroBall guild)
+LOGS_GUILD_ID = 1462239696418635840  # id of the guild where the logs are sent
+LOGS_CHANNEL_ID = 1463155147625467978  # id of the channel where the logs are sent
 
 # reading-write csv
 def read_csv(path,sep=";"):
@@ -43,7 +45,7 @@ balls_id = list(balls.keys())
 players_keys = ["player_id"]+balls_id
 spawn_channels = read_csv(r"./channels.csv")
 players = read_csv(r"./players.csv")
-emojis = {} # set on on_ready()
+emojis, log_channel = {}, {} # set on on_ready()
 
 # technical constants
 mini_digits = {'1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉'}
@@ -63,7 +65,6 @@ class CustomHelpCommand(commands.HelpCommand):
         ...
 
 bot = commands.Bot(command_prefix="/", intents=discord.Intents.default(), help_command=CustomHelpCommand())
-
 
 # functions
 def normalize_text(text):
@@ -140,7 +141,7 @@ class CatchView(discord.ui.View):
                 players[catcher_id][ball] = ""
             players[catcher_id][ball_id] = "1"
         write_csv(r"./players.csv",players,players_keys)
-        print(" 🪵 🤚  catch │ player:",catcher.display_name,"│ ball:",ball_id,"│ guild:",self.msg.guild.name)
+        await log_channel["channel"].send(" 🪵 🤚  catch │ player: "+catcher.display_name+" │ ball: "+str(ball_id)+" │ guild: "+self.msg.guild.name)
         
     def set_msg(self,msg:discord.Message):
         self.msg = msg
@@ -156,6 +157,7 @@ async def on_ready():
         else:
             print("│ "+name+" "*(29-len(name))+"│")
     print("└──────────────────────────────┘")
+    log_channel["channel"] = bot.get_guild(LOGS_GUILD_ID).get_channel(LOGS_CHANNEL_ID)
     for emoji in bot.get_guild(EMOJI_GUILD_ID).emojis:
         emojis[emoji.name] = "<:"+emoji.name+":"+str(emoji.id)+"> "
     print("Let's go !")
@@ -168,7 +170,7 @@ async def on_message(message:discord.Message):
     str_guild_id = str(int_guild_id)
 
     if not str_guild_id in spawn_channels:
-        print(" 🪵 📜  unregistered channel │ guild:", message.guild.name, "│ guild_id:", message.guild.id)
+        await log_channel["channel"].send(" 🪵 📜  unregistered channel │ guild: "+message.guild.name+" │ guild_id: "+str_guild_id)
         return
 
     current_time = time.time()
@@ -178,16 +180,16 @@ async def on_message(message:discord.Message):
     try:
         channel = message.guild.get_channel(int(spawn_channels[str_guild_id]["channel_id"]))
     except:
-        print(" 🪵 🤔 erreur get_channel │ guild:",message.guild.name,"│ channel_id:",spawn_channels[str_guild_id]["channel_id"])
+        await log_channel["channel"].send(" 🪵 🤔 erreur get_channel │ guild: "+message.guild.name+" │ channel_id: "+spawn_channels[str_guild_id]["channel_id"])
         return
 
     rand = random.random()
-    print(" 🪵 🌿  trigger │ guild:", message.guild.name, "│ rand:",rand)
+    await log_channel["channel"].send(" 🪵 🌿  trigger │ guild: "+message.guild.name+" │ rand: "+str(rand))
     if rand < PROBA:
         ball_id = random.choice(balls_id)
         with open("./img/"+balls[ball_id]["img"]+".png", "rb") as file:
             picture = discord.File(file)
-        print(" 🪵 🏀  microball │ ball:", ball_id, "│ guild:", message.guild.name)
+        await log_channel["channel"].send(" 🪵 🏀  microball │ ball: "+ball_id+" │ guild: "+message.guild.name)
         view = CatchView(ball_id)
         msg = await channel.send("Une MicroBall vient d'apparaître !\n** **", file=picture, view=view)
         view.set_msg(msg)
@@ -205,10 +207,10 @@ async def set_channel(inter:discord.Interaction):
             last_triggers[inter.guild.id] = time.time()
         write_csv("./channels.csv",spawn_channels,("guild_id","channel_id","special"))
         await inter.followup.send("Dans le serveur **"+inter.guild.name+"**, les MicroBalls vont apparaître dans le salon **<#"+str(inter.channel.id)+">**", ephemeral=True)
-        print(" 🪵 🔧 set-channel │ guild:",inter.guild.name,"│ channel:",inter.channel.name,"│ user:",inter.user.name)
+        await log_channel["channel"].send(" 🪵 🔧 set-channel │ guild: "+inter.guild.name+" │ channel: "+inter.channel.name+" │ user: "+inter.user.name)
     else:
         await inter.followup.send("⚠️ Il vous faut la permission **`manage-channels`** pour exécuter cette commande :)", ephemeral=True)
-        print(" 🪵 🤐 set-channel no permission │ guild:",inter.guild.name,"│ user:",inter.user.name)
+        await log_channel["channel"].send(" 🪵 🤐 set-channel no permission │ guild: "+inter.guild.name+" │ user: "+inter.user.name)
 
 @bot.tree.command(name="info", description="Obtenir des informations sur le bot MicroBalls")
 async def info(inter:discord.Interaction):
