@@ -184,11 +184,14 @@ async def on_message(message:discord.Message):
     await log_channel["channel"].send("-# 🪵 🌿  trigger │ guild: "+message.guild.name+" │ rand: "+str(rand))
     if rand < PROBA:
         ball_id = random.choice(balls_id)
+        await log_channel["channel"].send(" 🪵 🏀  microball │ ball: "+ball_id+" │ guild: "+message.guild.name)
         with open("./img/"+balls[ball_id]["img"]+".png", "rb") as file:
             picture = discord.File(file)
-        await log_channel["channel"].send(" 🪵 🏀  microball │ ball: "+ball_id+" │ guild: "+message.guild.name)
         view = CatchView(ball_id)
-        msg = await channel.send("Une MicroBall vient d'apparaître !\n** **", file=picture, view=view)
+        try:
+            msg = await channel.send("Une MicroBall vient d'apparaître !\n** **", file=picture, view=view)
+        except:
+            await log_channel["channel"].send(" 🪵 ⛔ **forbidden ball │ ball: "+ball_id+" │ guild: "+message.guild.name+"**")
         view.set_msg(msg)
 
 @bot.tree.command(name="set-channel", description="Exécuter cette commande dans le salon où vous voulez que les MicroBalls apparaissent")
