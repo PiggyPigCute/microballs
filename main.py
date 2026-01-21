@@ -194,7 +194,7 @@ async def on_message(message:discord.Message):
 @bot.tree.command(name="set-channel", description="Exécuter cette commande dans le salon où vous voulez que les MicroBalls apparaissent")
 async def set_channel(inter:discord.Interaction):
     await inter.response.defer(ephemeral=True)
-    if inter.user.guild_permissions.manage_channels:
+    if inter.user.guild_permissions.manage_channels or inter.user.guild_permissions.administrator or inter.guild.owner_id == inter.user.id:
         guild_id = str(inter.guild.id)
         channel_id = str(inter.channel.id)
         if guild_id in spawn_channels:
