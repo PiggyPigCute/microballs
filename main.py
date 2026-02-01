@@ -1,8 +1,12 @@
-import discord
-from discord.ext import commands
-import random
-import time
+import os
 import re
+import sys
+import time
+import random
+import discord
+import traceback
+
+from discord.ext import commands
 
 # constants
 PROBA = 0.04  # probability of sending a ball when a msg is sent
@@ -60,6 +64,18 @@ ernestien = {"a":"n","â":"n̂","b":"Ր","d":"Þ","e":"c","ê":"ĉ","f":"ɸ","g"
 # time
 current_time = time.time()
 last_triggers = {int(guild_id):current_time for guild_id in spawn_channels}
+
+# log errors
+async def log_error(exception, **kwargs):
+    exc_type, exc_value, exc_tb = sys.exc_info()
+    tb = traceback.extract_tb(exc_tb)
+    for frame in reversed(tb):
+        if os.getcwd() in frame.filename:
+            return frame
+    last_frame = tb[-1]
+    await log_channel["channel"].send(f"# 💥ERREUR\n {exception} in {last_frame.filename} ligne {last_frame.lineno}"+"".join([f"\n* `{key}` : {kwargs[key]}" for key in kwargs]))
+    # log_save(f"[{datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] {msg.guild.id if hasattr(msg, "guild") and hasattr(msg.guild, "id") else 'DM'} ERREUR: {error} dans {last_frame.filename} ligne {last_frame.lineno} | Auteur: {msg.author if hasattr(msg, "author") else "?"} | Serveur: {msg.guild.name if hasattr(msg, "guild") and hasattr(msg.guild, "name") else 'DM'} | Canal: {msg.channel.name if hasattr(msg, "channel") and hasattr(msg.channel, "name") else 'DM'} | Message: '{replace_lbreaks(msg.content) if hasattr(msg, "content") else "?"}'")
+
 
 # bot initialization
 class CustomHelpCommand(commands.HelpCommand):
@@ -165,38 +181,42 @@ async def on_ready():
 
 @bot.event
 async def on_message(message:discord.Message):
-    if message.author.bot: return
-
-    int_guild_id = message.guild.id
-    str_guild_id = str(int_guild_id)
-
-    if not str_guild_id in spawn_channels:
-        await log_channel["channel"].send(" 🪵 📜  unregistered channel │ guild: "+message.guild.name+" │ guild_id: "+str_guild_id)
-        return
-
-    current_time = time.time()
-    if current_time-last_triggers[int_guild_id]<WAIT_DURATION: return
-    last_triggers[int_guild_id] = current_time
-
     try:
-        channel = message.guild.get_channel(int(spawn_channels[str_guild_id]["channel_id"]))
-    except:
-        await log_channel["channel"].send(" 🪵 🤔 erreur get_channel │ guild: "+message.guild.name+" │ channel_id: "+spawn_channels[str_guild_id]["channel_id"])
-        return
+        if message.author.bot: return
 
-    rand = random.random()
-    await log_channel["channel"].send("-# 🪵 🌿  trigger │ guild: "+message.guild.name+" │ rand: "+str(rand))
-    if rand < PROBA:
-        ball_id = random.choice(balls_id)
-        await log_channel["channel"].send(" 🪵 🏀  microball │ ball: "+ball_id+" │ guild: "+message.guild.name)
-        with open("./img/"+balls[ball_id]["img"]+".png", "rb") as file:
-            picture = discord.File(file)
-        view = CatchView(ball_id)
+        int_guild_id = message.guild.id
+        str_guild_id = str(int_guild_id)
+
+        if not str_guild_id in spawn_channels:
+            await log_channel["channel"].send(" 🪵 📜  unregistered channel │ guild: "+message.guild.name+" │ guild_id: "+str_guild_id)
+            return
+
+        current_time = time.time()
+        if current_time-last_triggers[int_guild_id]<WAIT_DURATION: return
+        last_triggers[int_guild_id] = current_time
+
         try:
-            msg = await channel.send("Une MicroBall vient d'apparaître !\n** **", file=picture, view=view)
+            channel = message.guild.get_channel(int(spawn_channels[str_guild_id]["channel_id"]))
         except:
-            await log_channel["channel"].send(" 🪵 ⛔ **forbidden ball │ ball: "+ball_id+" │ guild: "+message.guild.name+"**")
-        view.set_msg(msg)
+            await log_channel["channel"].send(" 🪵 🤔 erreur get_channel │ guild: "+message.guild.name+" │ channel_id: "+spawn_channels[str_guild_id]["channel_id"])
+            return
+
+        rand = random.random()
+        await log_channel["channel"].send("-# 🪵 🌿  trigger │ guild: "+message.guild.name+" │ rand: "+str(rand))
+        if rand < PROBA:
+            ball_id = random.choice(balls_id)
+            await log_channel["channel"].send(" 🪵 🏀  microball │ ball: "+ball_id+" │ guild: "+message.guild.name)
+            with open("./img/"+balls[ball_id]["img"]+".png", "rb") as file:
+                picture = discord.File(file)
+            view = CatchView(ball_id)
+            try:
+                msg = await channel.send("Une MicroBall vient d'apparaître !\n** **", file=picture, view=view)
+            except:
+                await log_channel["channel"].send(" 🪵 ⛔ **forbidden ball │ ball: "+ball_id+" │ guild: "+message.guild.name+"**")
+            view.set_msg(msg)
+    except Exception as exception:
+        log_error(exception, guild_name=msg.guild.name, guild_id=msg.guild.id, author_name=msg.author.name, author_id=msg.author.id, channel_name=msg.channel.name, channel_id=msg.channel.id)
+
 
 @bot.tree.command(name="set-channel", description="Exécuter cette commande dans le salon où vous voulez que les MicroBalls apparaissent")
 async def set_channel(inter:discord.Interaction):
