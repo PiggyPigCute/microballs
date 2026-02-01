@@ -176,7 +176,6 @@ async def on_ready():
     print("└──────────────────────────────┘")
     log_channel["channel"] = bot.get_guild(LOGS_GUILD_ID).get_channel(LOGS_CHANNEL_ID)
     await log_channel["channel"].send(" 🪵 🎊  Let's Go !")
-    await bot.get_guild(LOGS_GUILD_ID).get_channel(1462239698616586432).send("Coucou Alenia ^^")
     for emoji in bot.get_guild(EMOJI_GUILD_ID).emojis:
         emojis[emoji.name] = "<:"+emoji.name+":"+str(emoji.id)+"> "
     print("Let's go !")
