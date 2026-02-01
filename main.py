@@ -68,13 +68,15 @@ last_triggers = {int(guild_id):current_time for guild_id in spawn_channels}
 # log errors
 async def log_error(exception, **kwargs):
     print("kabum")
-    exc_type, exc_value, exc_tb = sys.exc_info()
-    tb = traceback.extract_tb(exc_tb)
-    for frame in reversed(tb):
-        if os.getcwd() in frame.filename:
-            return frame
-    last_frame = tb[-1]
-    await log_channel["channel"].send(f"# 💥ERREUR\n {exception} in {last_frame.filename} ligne {last_frame.lineno}"+"".join([f"\n* `{key}` : {kwargs[key]}" for key in kwargs]))
+    await print("paf")
+    await log_channel["channel"].send("💥 pouf !")
+    # exc_type, exc_value, exc_tb = sys.exc_info()
+    # tb = traceback.extract_tb(exc_tb)
+    # for frame in reversed(tb):
+    #     if os.getcwd() in frame.filename:
+    #         return frame
+    # last_frame = tb[-1]
+    # await log_channel["channel"].send(f"# 💥ERREUR\n {exception} in {last_frame.filename} ligne {last_frame.lineno}"+"".join([f"\n* `{key}` : {kwargs[key]}" for key in kwargs]))
     # log_save(f"[{datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] {msg.guild.id if hasattr(msg, "guild") and hasattr(msg.guild, "id") else 'DM'} ERREUR: {error} dans {last_frame.filename} ligne {last_frame.lineno} | Auteur: {msg.author if hasattr(msg, "author") else "?"} | Serveur: {msg.guild.name if hasattr(msg, "guild") and hasattr(msg.guild, "name") else 'DM'} | Canal: {msg.channel.name if hasattr(msg, "channel") and hasattr(msg.channel, "name") else 'DM'} | Message: '{replace_lbreaks(msg.content) if hasattr(msg, "content") else "?"}'")
 
 
