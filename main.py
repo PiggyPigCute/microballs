@@ -14,6 +14,7 @@ WAIT_DURATION = 10  # time (in seconds) after a msg is sent, during this time th
 EMOJI_GUILD_ID = 1462239696418635840  # id of the guild where the the emojis are stored (here, the MicroBall guild)
 LOGS_GUILD_ID = 1462239696418635840  # id of the guild where the logs are sent
 LOGS_CHANNEL_ID = 1463155147625467978  # id of the channel where the logs are sent
+ERROR_PING_ROLE_ID = 1467532432872833156
 BOT_ADD_LINK = "https://discord.com/oauth2/authorize?client_id=1462241870158630913&permissions=3072&integration_type=0&scope=bot"
 
 # reading-write csv
@@ -67,7 +68,7 @@ last_triggers = {int(guild_id):current_time for guild_id in spawn_channels}
 
 # log errors
 async def log_error(exception, type="", **kwargs):
-    await log_channel["channel"].send("# :boom: Erreur !\n```ansi\n[2;33m"+type+"\n[2;1;4;31m"+str(exception)+"\n[0m[2;36m"+"\n".join(["- "+key+" : "+repr(kwargs[key]) for key in kwargs])+"```")
+    await log_channel["channel"].send("# :boom: Erreur !\n```ansi\n[2;33m"+type+"\n[2;1;4;31m"+str(exception)+"\n[0m[2;36m"+"\n".join(["- "+key+" : "+repr(kwargs[key]) for key in kwargs])+"```\n-# <@&"+str(ERROR_PING_ROLE_ID)+">")
     # 💥 Erreur !```"+str(exception)+"```\n* "+type+"\n"+repr(kwargs))
     # exc_type, exc_value, exc_tb = sys.exc_info()
     # tb = traceback.extract_tb(exc_tb)
@@ -117,20 +118,22 @@ class BoxModal(discord.ui.Modal):
         self.caught_view = caught_view
 
     async def on_submit(self, inter:discord.Interaction):
-        if self.caught_view.caught:
-            await inter.response.send_message("Désolé **"+inter.user.display_name+"**, la MicroBall a déjà été attrapée par **"+self.caught_view.catcher_name+"**")
-            return
-
-        awnser = normalize_text(inter.data["components"][0]["components"][0]["value"])
-        ball = balls[self.ball_id]
-        if re.match(ball["regex_fr"], awnser) != None:
-            await inter.response.send_message("Bravo <@"+str(inter.user.id)+">, tu as capturé **"+ball["nom_fr"]+"** !")
-            await self.caught_view.catch(inter.user)
-        elif "regex_ens" in ball and re.match(ball["regex_ens"], awnser) != None:
-            await inter.response.send_message("Bravo <@"+str(inter.user.id)+">, tu as capturé **"+"".join([ernestien[c] for c in ball["nom_ens"]])+"** !\n-# (Ces caractères étranges sont de l'ernestien, la langue de l'Ernestie. "+inter.user.display_name+" vient d'attraper la MicroBall en écrivant le nom en ernestien)")
-            await self.caught_view.catch(inter.user)
-        else:
-            await inter.response.send_message("Désolé **"+inter.user.display_name+"**, ce n'est pas le bon nom")
+        try:
+            if self.caught_view.caught:
+                await inter.response.send_message("Désolé **"+inter.user.display_name+"**, la MicroBall a déjà été attrapée par **"+self.caught_view.catcher_name+"**")
+                return
+            awnser = normalize_text(inter.data["components"][0]["components"][0]["value"])
+            ball = balls[self.ball_id]
+            if re.match(ball["regex_fr"], awnser) != None:
+                await inter.response.send_message("Bravo <@"+str(inter.user.id)+">, tu as capturé **"+ball["nom_fr"]+"** !")
+                await self.caught_view.catch(inter.user)
+            elif "regex_ens" in ball and re.match(ball["regex_ens"], awnser) != None:
+                await inter.response.send_message("Bravo <@"+str(inter.user.id)+">, tu as capturé **"+"".join([ernestien[c] for c in ball["nom_ens"]])+"** !\n-# (Ces caractères étranges sont de l'ernestien, la langue de l'Ernestie. "+inter.user.display_name+" vient d'attraper la MicroBall en écrivant le nom en ernestien)")
+                await self.caught_view.catch(inter.user)
+            else:
+                await inter.response.send_message("Désolé **"+inter.user.display_name+"**, ce n'est pas le bon nom")
+        except Exception as exception:
+            log_error(exception, "BoxModal on_submit", guild=(inter.guild.name,inter.guild_id), ball=self.ball_id, caught=self.caught_view.caught)
 
 class CatchView(discord.ui.View):
     def __init__(self, ball_id):
@@ -142,7 +145,10 @@ class CatchView(discord.ui.View):
 
     @discord.ui.button(label="Attraper !", style=discord.ButtonStyle.primary, custom_id="catch")
     async def open_modal(self, inter:discord.Interaction, button: discord.ui.Button):
-        await inter.response.send_modal(BoxModal(self.ball_id,self))
+        try:
+            await inter.response.send_modal(BoxModal(self.ball_id,self))
+        except Exception as excepction:
+            log_error(excepction, "CatchView open_modal", guild=(inter.guild.name,inter.guild_id), ball=self.ball_id)
     
     async def catch(self, catcher:discord.Member):
         self.caught = True
@@ -185,8 +191,6 @@ async def on_message(message:discord.Message):
     try:
         if message.author.bot: return
 
-        a = 1/0
-
         int_guild_id = message.guild.id
         str_guild_id = str(int_guild_id)
 
@@ -218,64 +222,72 @@ async def on_message(message:discord.Message):
                 await log_channel["channel"].send(" 🪵 ⛔ **forbidden ball │ ball: "+ball_id+" │ guild: "+message.guild.name+"**")
             view.set_msg(msg)
     except Exception as exception:
-        await log_error(exception, "on_msg", guild=(message.guild.name,message.guild.id), author=(message.author.name,message.author.id), channel=(message.channel.name,message.channel.id))
-
+        await log_error(exception, "@bot.event on_mssages", guild=(message.guild.name,message.guild.id), author=(message.author.name,message.author.id), channel=(message.channel.name,message.channel.id))
 
 @bot.tree.command(name="set-channel", description="Exécuter cette commande dans le salon où vous voulez que les MicroBalls apparaissent")
 async def set_channel(inter:discord.Interaction):
-    await inter.response.defer(ephemeral=True)
-    app_without_bot = True
-    for guild in bot.guilds:
-        if guild.id == inter.guild_id:
-            app_without_bot = False
-    if app_without_bot:
-        await log_channel["channel"].send(" 🪵 👻 set-channel app_without_bot │ guild: "+inter.guild.name+" ("+str(inter.guild_id)+") │ user: "+inter.user.name)
-        await inter.followup.send("👻 Je ne suis pas sur ce serveur, l'application a été installée mais pas le bot n'a pas été ajouté.\nTu peux utiliser ce lien pour ajouter le bot : "+BOT_ADD_LINK, ephemeral=True)
-    if inter.user.guild_permissions.manage_channels or inter.user.guild_permissions.administrator or inter.guild.owner_id == inter.user.id:
-        guild_id = str(inter.guild.id)
-        channel_id = str(inter.channel.id)
-        if guild_id in spawn_channels:
-            spawn_channels[guild_id]["channel_id"] = channel_id
+    try:
+        await inter.response.defer(ephemeral=True)
+        app_without_bot = True
+        for guild in bot.guilds:
+            if guild.id == inter.guild_id:
+                app_without_bot = False
+        if app_without_bot:
+            await log_channel["channel"].send(" 🪵 👻 set-channel app_without_bot │ guild: "+inter.guild.name+" ("+str(inter.guild_id)+") │ user: "+inter.user.name)
+            await inter.followup.send("👻 Je ne suis pas sur ce serveur, l'application a été installée mais pas le bot n'a pas été ajouté.\nTu peux utiliser ce lien pour ajouter le bot : "+BOT_ADD_LINK, ephemeral=True)
+        if inter.user.guild_permissions.manage_channels or inter.user.guild_permissions.administrator or inter.guild.owner_id == inter.user.id:
+            guild_id = str(inter.guild.id)
+            channel_id = str(inter.channel.id)
+            if guild_id in spawn_channels:
+                spawn_channels[guild_id]["channel_id"] = channel_id
+            else:
+                spawn_channels[guild_id] = {"guild_id":guild_id,"channel_id":channel_id}
+                last_triggers[inter.guild.id] = time.time()
+            write_csv("./channels.csv",spawn_channels,("guild_id","channel_id","special"))
+            await inter.followup.send("Dans le serveur **"+inter.guild.name+"**, les MicroBalls vont apparaître dans le salon **<#"+str(inter.channel.id)+">**", ephemeral=True)
+            await log_channel["channel"].send(" 🪵 🔧 set-channel │ guild: "+inter.guild.name+" │ channel: "+inter.channel.name+" │ user: "+inter.user.name)
         else:
-            spawn_channels[guild_id] = {"guild_id":guild_id,"channel_id":channel_id}
-            last_triggers[inter.guild.id] = time.time()
-        write_csv("./channels.csv",spawn_channels,("guild_id","channel_id","special"))
-        await inter.followup.send("Dans le serveur **"+inter.guild.name+"**, les MicroBalls vont apparaître dans le salon **<#"+str(inter.channel.id)+">**", ephemeral=True)
-        await log_channel["channel"].send(" 🪵 🔧 set-channel │ guild: "+inter.guild.name+" │ channel: "+inter.channel.name+" │ user: "+inter.user.name)
-    else:
-        await log_channel["channel"].send(" 🪵 🤐 set-channel no permission │ guild: "+inter.guild.name+" │ user: "+inter.user.name)
-        await inter.followup.send("⚠️ Il vous faut la permission **`manage-channels`** pour exécuter cette commande :)", ephemeral=True)
+            await log_channel["channel"].send(" 🪵 🤐 set-channel no permission │ guild: "+inter.guild.name+" │ user: "+inter.user.name)
+            await inter.followup.send("⚠️ Il vous faut la permission **`manage-channels`** pour exécuter cette commande :)", ephemeral=True)
+    except Exception as exception:
+        log_error(exception, "command /set-channel", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
 
 @bot.tree.command(name="info", description="Obtenir des informations sur le bot MicroBalls")
 async def info(inter:discord.Interaction):
-    await inter.response.defer(ephemeral=True)
-    guild_id = str(inter.guild.id)
-    if guild_id in spawn_channels:
-        text = "Dans le serveur *"+inter.guild.name+"*, c'est le salon <#"+spawn_channels[guild_id]["channel_id"]+"> qui a été choisi pour faire apparaître les MicroBalls. Pour changer le salon d'apparission, vous pouvez utiliser la commande `/set-channel` dans le salon voulu"
-    else:
-        text = "Pour l'instant dans le serveur *"+inter.guild.name+"*, aucun salon n'a été sélectionné pour faire apparaître les MicroBalls. Utilisez la commande `/set-channel` dans le salon voulu pour les faire apparaître !"
-    await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.blue(),title="MicroBalls",description="Salut, je suis le bot **MicroBalls**, créé par **PiggyPig** (`@piggypig`).\n\nLe principe est simple, lorsque le serveur est actif des *MicroBalls* (CountryBalls de micronations) apparaissent. Les membres du serveurs ont alors 5 minutes pour essayer d'attraper la MicroBall en cliquant sur le bouton et en inscrivant le nom de la micronation (en français ou en ernestien).\n\nVous pouvez faire `/collection` pour obtenir votre collection et voir quelle MicroBalls il vous manque. Vous pouvez aussi faire `/give` pour donner une MicroBall à quelqu'un d'autre.\n\n"+text+" (vous devez avoir la permission *manage_channels*)."),ephemeral=True)
+    try:
+        await inter.response.defer(ephemeral=True)
+        guild_id = str(inter.guild.id)
+        if guild_id in spawn_channels:
+            text = "Dans le serveur *"+inter.guild.name+"*, c'est le salon <#"+spawn_channels[guild_id]["channel_id"]+"> qui a été choisi pour faire apparaître les MicroBalls. Pour changer le salon d'apparission, vous pouvez utiliser la commande `/set-channel` dans le salon voulu"
+        else:
+            text = "Pour l'instant dans le serveur *"+inter.guild.name+"*, aucun salon n'a été sélectionné pour faire apparaître les MicroBalls. Utilisez la commande `/set-channel` dans le salon voulu pour les faire apparaître !"
+        await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.blue(),title="MicroBalls",description="Salut, je suis le bot **MicroBalls**, créé par **PiggyPig** (`@piggypig`).\n\nLe principe est simple, lorsque le serveur est actif des *MicroBalls* (CountryBalls de micronations) apparaissent. Les membres du serveurs ont alors 5 minutes pour essayer d'attraper la MicroBall en cliquant sur le bouton et en inscrivant le nom de la micronation (en français ou en ernestien).\n\nVous pouvez faire `/collection` pour obtenir votre collection et voir quelle MicroBalls il vous manque. Vous pouvez aussi faire `/give` pour donner une MicroBall à quelqu'un d'autre.\n\n"+text+" (vous devez avoir la permission *manage_channels*)."),ephemeral=True)
+    except Exception as exception:
+        log_error(exception, "command /info", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
 
 @bot.tree.command(name="collection", description="Regarde la liste des MicroBalls que tu as")
 async def collection(inter:discord.Interaction):
-    await inter.response.defer()
-    player_id = str(inter.user.id)
-    if player_id in players:
-        player = players[player_id]
-        caught_balls = []
-        for ball_id in balls:
-            if ball_id in player and player[ball_id] != "":
-                caught_balls.append((int(player[ball_id]),emojis[ball_id]+("ₓ"+"".join([mini_digits[c] for c in player[ball_id]]) if player[ball_id] != "1" else "")))
-        caught_balls.sort(key=lambda x: -int(x[0]))
-        text1 = "MicroBalls attrapées :\n# " + " ".join([x[1] for x in caught_balls])
-    else:
-        caught_balls = []
-        text1 = "Tu n'as attrapé aucune MicroBall pour l'instant"
-    if len(caught_balls) == len(balls):
-        text2 = "Féliciation, tu as attrapées toutes les MicroBalls ! :tada:"
-    else:
-        text2 = "Il te reste " + str(len(balls)-len(caught_balls)) + " MicroBalls à découvrir"
-    await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.blue(),title="Collection de **"+inter.user.display_name+"**",description=text1+"\n\n"+text2))
+    try:
+        await inter.response.defer()
+        player_id = str(inter.user.id)
+        if player_id in players:
+            player = players[player_id]
+            caught_balls = []
+            for ball_id in balls:
+                if ball_id in player and player[ball_id] != "":
+                    caught_balls.append((int(player[ball_id]),emojis[ball_id]+("ₓ"+"".join([mini_digits[c] for c in player[ball_id]]) if player[ball_id] != "1" else "")))
+            caught_balls.sort(key=lambda x: -int(x[0]))
+            text1 = "MicroBalls attrapées :\n# " + " ".join([x[1] for x in caught_balls])
+        else:
+            caught_balls = []
+            text1 = "Tu n'as attrapé aucune MicroBall pour l'instant"
+        if len(caught_balls) == len(balls):
+            text2 = "Féliciation, tu as attrapées toutes les MicroBalls ! :tada:"
+        else:
+            text2 = "Il te reste " + str(len(balls)-len(caught_balls)) + " MicroBalls à découvrir"
+        await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.blue(),title="Collection de **"+inter.user.display_name+"**",description=text1+"\n\n"+text2))
+    except Exception as exception:
+        log_error(exception, "command /collection", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
 
 # go !
 with open(r"./token.lock", 'r') as file:
