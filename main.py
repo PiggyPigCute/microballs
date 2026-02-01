@@ -68,7 +68,7 @@ last_triggers = {int(guild_id):current_time for guild_id in spawn_channels}
 
 # log errors
 async def log_error(exception, type="", **kwargs):
-    await log_channel["channel"].send("# :boom: Erreur !\n```ansi\n[2;33m"+type+"\n[2;1;4;31m"+str(exception)+"\n[0m[2;36m"+"\n".join(["- "+key+" : "+repr(kwargs[key]) for key in kwargs])+"```\n-# <@&"+str(ERROR_PING_ROLE_ID)+">")
+    await log_channel["channel"].send("# :boom: Erreur !\n```ansi\n[2;33m"+type+"\n[2;1;4;31m"+str(exception)+"\n[0m[2;36m"+"\n".join(["- "+key+" : "+repr(kwargs[key]) for key in kwargs])+"```-# <@&"+str(ERROR_PING_ROLE_ID)+">")
     # 💥 Erreur !```"+str(exception)+"```\n* "+type+"\n"+repr(kwargs))
     # exc_type, exc_value, exc_tb = sys.exc_info()
     # tb = traceback.extract_tb(exc_tb)
