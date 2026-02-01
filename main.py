@@ -68,7 +68,7 @@ last_triggers = {int(guild_id):current_time for guild_id in spawn_channels}
 # log errors
 async def log_error(exception, **kwargs):
     print("kabum")
-    await log_channel["channel"].send("💥 pouf !")
+    await log_channel["channel"].send("# 💥 Erreur !\n"+str(exception))
     # exc_type, exc_value, exc_tb = sys.exc_info()
     # tb = traceback.extract_tb(exc_tb)
     # for frame in reversed(tb):
