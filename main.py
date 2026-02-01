@@ -191,8 +191,6 @@ async def on_message(message:discord.Message):
     try:
         if message.author.bot: return
 
-        a = 1/0
-
         int_guild_id = message.guild.id
         str_guild_id = str(int_guild_id)
 
