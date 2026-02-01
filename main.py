@@ -66,9 +66,9 @@ current_time = time.time()
 last_triggers = {int(guild_id):current_time for guild_id in spawn_channels}
 
 # log errors
-async def log_error(exception, **kwargs):
+async def log_error(exception, type="", **kwargs):
     print("kabum")
-    await log_channel["channel"].send("# 💥 Erreur !\n"+str(exception))
+    await log_channel["channel"].send("# 💥 Erreur !```"+str(exception)+"```\n* "+type+"\n"+repr(kwargs))
     # exc_type, exc_value, exc_tb = sys.exc_info()
     # tb = traceback.extract_tb(exc_tb)
     # for frame in reversed(tb):
@@ -220,7 +220,7 @@ async def on_message(message:discord.Message):
             view.set_msg(msg)
     except Exception as exception:
         print("boom")
-        await log_error(exception, guild_name=message.guild.name, guild_id=message.guild.id, author_name=message.author.name, author_id=message.author.id, channel_name=message.channel.name, channel_id=message.channel.id)
+        await log_error(exception, "on_msg", guild=(message.guild.name,message.guild.id), author=(message.author.name,message.author.id), channel=(message.channel.name,message.channel.id))
 
 
 @bot.tree.command(name="set-channel", description="Exécuter cette commande dans le salon où vous voulez que les MicroBalls apparaissent")
