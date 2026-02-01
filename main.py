@@ -67,6 +67,7 @@ last_triggers = {int(guild_id):current_time for guild_id in spawn_channels}
 
 # log errors
 async def log_error(exception, **kwargs):
+    print("kabum")
     exc_type, exc_value, exc_tb = sys.exc_info()
     tb = traceback.extract_tb(exc_tb)
     for frame in reversed(tb):
@@ -217,6 +218,7 @@ async def on_message(message:discord.Message):
                 await log_channel["channel"].send(" 🪵 ⛔ **forbidden ball │ ball: "+ball_id+" │ guild: "+message.guild.name+"**")
             view.set_msg(msg)
     except Exception as exception:
+        print("boom")
         await log_error(exception, guild_name=message.guild.name, guild_id=message.guild.id, author_name=message.author.name, author_id=message.author.id, channel_name=message.channel.name, channel_id=message.channel.id)
 
 
