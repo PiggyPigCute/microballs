@@ -68,7 +68,7 @@ last_triggers = {int(guild_id):current_time for guild_id in spawn_channels}
 
 # log errors
 async def log_error(exception, type="", **kwargs):
-    await log_channel["channel"].send("# :boom: Erreur !\n```ansi\n[2;33m"+type+"\n[2;1;4;31m"+str(exception)+"\n[0m[2;36m"+"\n".join(["- "+key+" : "+repr(kwargs[key]) for key in kwargs])+"```-# <@&"+str(ERROR_PING_ROLE_ID)+">")
+    await log_channel["channel"].send("# :boom: Erreur !\n```ansi\n[2;33m"+type+"\n[2;1;4;31m"+str(exception)+"\n[0m[2;36m"+"\n".join(["- "+key+" : "+repr(kwargs[key]) for key in kwargs])+"```\n-# <@&"+str(ERROR_PING_ROLE_ID)+">")
     # 💥 Erreur !```"+str(exception)+"```\n* "+type+"\n"+repr(kwargs))
     # exc_type, exc_value, exc_tb = sys.exc_info()
     # tb = traceback.extract_tb(exc_tb)
@@ -224,7 +224,7 @@ async def on_message(message:discord.Message):
                 await log_channel["channel"].send(" 🪵 ⛔ **forbidden ball │ ball: "+ball_id+" │ guild: "+message.guild.name+"**")
             view.set_msg(msg)
     except Exception as exception:
-        await log_error(exception, "@bot.event on_mssages", guild=(message.guild.name,message.guild.id), author=(message.author.name,message.author.id), channel=(message.channel.name,message.channel.id))
+        await log_error(exception, "@bot.event on_messages", guild=(message.guild.name,message.guild.id), author=(message.author.name,message.author.id), channel=(message.channel.name,message.channel.id))
 
 @bot.tree.command(name="set-channel", description="Exécuter cette commande dans le salon où vous voulez que les MicroBalls apparaissent")
 async def set_channel(inter:discord.Interaction):
