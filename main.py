@@ -217,7 +217,7 @@ async def on_message(message:discord.Message):
                 await log_channel["channel"].send(" 🪵 ⛔ **forbidden ball │ ball: "+ball_id+" │ guild: "+message.guild.name+"**")
             view.set_msg(msg)
     except Exception as exception:
-        log_error(exception, guild_name=message.guild.name, guild_id=message.guild.id, author_name=message.author.name, author_id=message.author.id, channel_name=message.channel.name, channel_id=message.channel.id)
+        await log_error(exception, guild_name=message.guild.name, guild_id=message.guild.id, author_name=message.author.name, author_id=message.author.id, channel_name=message.channel.name, channel_id=message.channel.id)
 
 
 @bot.tree.command(name="set-channel", description="Exécuter cette commande dans le salon où vous voulez que les MicroBalls apparaissent")
