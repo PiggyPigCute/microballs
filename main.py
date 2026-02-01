@@ -10,6 +10,7 @@ WAIT_DURATION = 10  # time (in seconds) after a msg is sent, during this time th
 EMOJI_GUILD_ID = 1462239696418635840  # id of the guild where the the emojis are stored (here, the MicroBall guild)
 LOGS_GUILD_ID = 1462239696418635840  # id of the guild where the logs are sent
 LOGS_CHANNEL_ID = 1463155147625467978  # id of the channel where the logs are sent
+BOT_ADD_LINK = "https://discord.com/oauth2/authorize?client_id=1462241870158630913&permissions=3072&integration_type=0&scope=bot"
 
 # reading-write csv
 def read_csv(path,sep=";"):
@@ -45,7 +46,10 @@ balls_id = list(balls.keys())
 players_keys = ["player_id"]+balls_id
 spawn_channels = read_csv(r"./channels.csv")
 players = read_csv(r"./players.csv")
-emojis, log_channel = {}, {} # set on on_ready()
+
+# variables set during on_ready()
+emojis = {}
+log_channel = {}
 
 # technical constants
 mini_digits = {'1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉'}
@@ -197,6 +201,13 @@ async def on_message(message:discord.Message):
 @bot.tree.command(name="set-channel", description="Exécuter cette commande dans le salon où vous voulez que les MicroBalls apparaissent")
 async def set_channel(inter:discord.Interaction):
     await inter.response.defer(ephemeral=True)
+    app_without_bot = True
+    for guild in bot.guilds:
+        if guild.id == inter.guild_id:
+            app_without_bot = False
+    if app_without_bot:
+        await log_channel["channel"].send(" 🪵 👻 set-channel app_without_bot │ guild: "+inter.guild.name+" ("+str(inter.guild_id)+") │ user: "+inter.user.name)
+        await inter.followup.send("👻 Je ne suis pas sur ce serveur, l'application a été installée mais pas le bot n'a pas été ajouté.\nTu peux utiliser ce lien pour ajouter le bot : "+BOT_ADD_LINK, ephemeral=True)
     if inter.user.guild_permissions.manage_channels or inter.user.guild_permissions.administrator or inter.guild.owner_id == inter.user.id:
         guild_id = str(inter.guild.id)
         channel_id = str(inter.channel.id)
@@ -228,17 +239,20 @@ async def collection(inter:discord.Interaction):
     player_id = str(inter.user.id)
     if player_id in players:
         player = players[player_id]
-        caught_balls, uncaught_balls = [], []
+        caught_balls = []
         for ball_id in balls:
             if ball_id in player and player[ball_id] != "":
                 caught_balls.append((int(player[ball_id]),emojis[ball_id]+("ₓ"+"".join([mini_digits[c] for c in player[ball_id]]) if player[ball_id] != "1" else "")))
-            else:
-                uncaught_balls.append(emojis[ball_id])
         caught_balls.sort(key=lambda x: -int(x[0]))
-        text = "MicroBalls attrapées :\n# " + " ".join([x[1] for x in caught_balls]) + "\n\nMicroBalls à attraper :\n### "+" ".join(uncaught_balls)
+        text1 = "MicroBalls attrapées :\n# " + " ".join([x[1] for x in caught_balls])
     else:
-        text = "Tu n'as attrapé aucune MicroBall pour l'instant, voici la liste des MicroBalls existantes :\n### " + " ".join([emojis[ball] for ball in balls])
-    await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.blue(),title="Collection de **"+inter.user.display_name+"**",description=text))
+        caught_balls = []
+        text1 = "Tu n'as attrapé aucune MicroBall pour l'instant"
+    if len(caught_balls) == len(balls):
+        text2 = "Féliciation, tu as attrapées toutes les MicroBalls ! :tada:"
+    else:
+        text2 = "Il te reste " + str(len(balls)-len(caught_balls)) + " MicroBalls à découvrir"
+    await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.blue(),title="Collection de **"+inter.user.display_name+"**",description=text1+"\n\n"+text2))
 
 # go !
 with open(r"./token.lock", 'r') as file:
