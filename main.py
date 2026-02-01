@@ -67,8 +67,8 @@ last_triggers = {int(guild_id):current_time for guild_id in spawn_channels}
 
 # log errors
 async def log_error(exception, type="", **kwargs):
-    print("kabum")
-    await log_channel["channel"].send("# 💥 Erreur !```"+str(exception)+"```\n* "+type+"\n"+repr(kwargs))
+    await log_channel["channel"].send("# :boom: Erreur !\n```ansi\n[2;33m"+type+"\n[2;1;4;31m"+str(exception)+"\n[0m[2;36m"+"\n".join(["- "+key+" : "+repr(kwargs[key]) for key in kwargs])+"```")
+    # 💥 Erreur !```"+str(exception)+"```\n* "+type+"\n"+repr(kwargs))
     # exc_type, exc_value, exc_tb = sys.exc_info()
     # tb = traceback.extract_tb(exc_tb)
     # for frame in reversed(tb):
@@ -77,7 +77,6 @@ async def log_error(exception, type="", **kwargs):
     # last_frame = tb[-1]
     # await log_channel["channel"].send(f"# 💥ERREUR\n {exception} in {last_frame.filename} ligne {last_frame.lineno}"+"".join([f"\n* `{key}` : {kwargs[key]}" for key in kwargs]))
     # log_save(f"[{datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] {msg.guild.id if hasattr(msg, "guild") and hasattr(msg.guild, "id") else 'DM'} ERREUR: {error} dans {last_frame.filename} ligne {last_frame.lineno} | Auteur: {msg.author if hasattr(msg, "author") else "?"} | Serveur: {msg.guild.name if hasattr(msg, "guild") and hasattr(msg.guild, "name") else 'DM'} | Canal: {msg.channel.name if hasattr(msg, "channel") and hasattr(msg.channel, "name") else 'DM'} | Message: '{replace_lbreaks(msg.content) if hasattr(msg, "content") else "?"}'")
-
 
 # bot initialization
 class CustomHelpCommand(commands.HelpCommand):
@@ -219,7 +218,6 @@ async def on_message(message:discord.Message):
                 await log_channel["channel"].send(" 🪵 ⛔ **forbidden ball │ ball: "+ball_id+" │ guild: "+message.guild.name+"**")
             view.set_msg(msg)
     except Exception as exception:
-        print("boom")
         await log_error(exception, "on_msg", guild=(message.guild.name,message.guild.id), author=(message.author.name,message.author.id), channel=(message.channel.name,message.channel.id))
 
 
