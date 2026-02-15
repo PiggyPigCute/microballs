@@ -48,6 +48,7 @@ balls_id = list(balls.keys())
 players_keys = ["player_id"]+balls_id
 spawn_channels = read_csv(r"./channels.csv")
 players = read_csv(r"./players.csv")
+players_ern = read_csv(r"./players_ern.csv")
 
 # variables set during on_ready()
 emojis = {}
@@ -66,15 +67,6 @@ last_triggers = {int(guild_id):current_time for guild_id in spawn_channels}
 # log errors
 async def log_error(exception, type="", **kwargs):
     await log_channel["channel"].send("# :boom: Erreur !\n```ansi\n[2;33m"+type+"\n[2;1;4;31m"+str(exception)+"\n[0m[2;36m"+"\n".join(["- "+key+" : "+repr(kwargs[key]) for key in kwargs])+"```\n-# <@&"+str(ERROR_PING_ROLE_ID)+">")
-    # 💥 Erreur !```"+str(exception)+"```\n* "+type+"\n"+repr(kwargs))
-    # exc_type, exc_value, exc_tb = sys.exc_info()
-    # tb = traceback.extract_tb(exc_tb)
-    # for frame in reversed(tb):
-    #     if os.getcwd() in frame.filename:
-    #         return frame
-    # last_frame = tb[-1]
-    # await log_channel["channel"].send(f"# 💥ERREUR\n {exception} in {last_frame.filename} ligne {last_frame.lineno}"+"".join([f"\n* `{key}` : {kwargs[key]}" for key in kwargs]))
-    # log_save(f"[{datetime.datetime.now().strftime('%d/%m/%Y %H:%M:%S')}] {msg.guild.id if hasattr(msg, "guild") and hasattr(msg.guild, "id") else 'DM'} ERREUR: {error} dans {last_frame.filename} ligne {last_frame.lineno} | Auteur: {msg.author if hasattr(msg, "author") else "?"} | Serveur: {msg.guild.name if hasattr(msg, "guild") and hasattr(msg.guild, "name") else 'DM'} | Canal: {msg.channel.name if hasattr(msg, "channel") and hasattr(msg.channel, "name") else 'DM'} | Message: '{replace_lbreaks(msg.content) if hasattr(msg, "content") else "?"}'")
 
 # bot initialization
 class CustomHelpCommand(commands.HelpCommand):
@@ -119,14 +111,15 @@ class BoxModal(discord.ui.Modal):
             if self.caught_view.caught:
                 await inter.response.send_message("Désolé **"+inter.user.display_name+"**, la MicroBall a déjà été attrapée par **"+self.caught_view.catcher_name+"**")
                 return
-            awnser = normalize_text(inter.data["components"][0]["components"][0]["value"])
+            raw_awnser = inter.data["components"][0]["components"][0]["value"]
+            awnser = normalize_text(raw_awnser)
             ball = balls[self.ball_id]
             if re.match(ball["regex_fr"], awnser) != None:
                 await inter.response.send_message("Bravo <@"+str(inter.user.id)+">, tu as capturé **"+ball["nom_fr"]+"** !")
-                await self.caught_view.catch(inter.user)
+                await self.caught_view.catch(inter.user, raw_awnser, ernestien=False)
             elif "regex_ens" in ball and re.match(ball["regex_ens"], awnser) != None:
                 await inter.response.send_message("Bravo <@"+str(inter.user.id)+">, tu as capturé **"+"".join([ernestien[c] for c in ball["nom_ens"]])+"** !\n-# (Ces caractères étranges sont de l'ernestien, la langue de l'Ernestie. "+inter.user.display_name+" vient d'attraper la MicroBall en écrivant le nom en ernestien)")
-                await self.caught_view.catch(inter.user)
+                await self.caught_view.catch(inter.user, raw_awnser, ernestien=True)
             else:
                 await inter.response.send_message("Désolé **"+inter.user.display_name+"**, ce n'est pas le bon nom")
         except Exception as exception:
@@ -147,7 +140,7 @@ class CatchView(discord.ui.View):
         except Exception as excepction:
             log_error(excepction, "CatchView open_modal", guild=(inter.guild.name,inter.guild_id), ball=self.ball_id)
     
-    async def catch(self, catcher:discord.Member):
+    async def catch(self, catcher:discord.Member, awnser, ernestien):
         self.caught = True
         self.catcher_name = catcher.display_name
         self.disabled = True
@@ -159,13 +152,27 @@ class CatchView(discord.ui.View):
                 player[ball_id] = str(1+int(player[ball_id]))
             else:
                 player[ball_id] = "1"
+            if ernestien:
+                player = players_ern[catcher_id]
+                if ball_id in player and player[ball_id] != "":
+                    player[ball_id] = str(1+int(player[ball_id]))
+                else:
+                    player[ball_id] = "1"
         else:
             players[catcher_id] = {"player_id":catcher_id}
             for ball in balls_id:
                 players[catcher_id][ball] = ""
             players[catcher_id][ball_id] = "1"
+            if ernestien:
+                players_ern[catcher_id] = {"player_id":catcher_id}
+                for ball in balls_id:
+                    players_ern[catcher_id][ball] = ""
+                players_ern[catcher_id][ball_id] = "1"
         write_csv(r"./players.csv",players,players_keys)
-        await log_channel["channel"].send(" 🪵 🤚  catch │ player: "+catcher.name+" │ ball: "+str(ball_id)+" │ guild: "+self.msg.guild.name)
+        write_csv(r"./players_ern.csv",players_ern,players_keys)
+        await log_channel["channel"].send(" 🪵 🤚  catch │ player: "+catcher.name+" │ ball: "+str(ball_id)+" │ guild: "+self.msg.guild.name, "│ awnser: "+awnser)
+        if ernestien:
+            await log_channel["channel"].send(" 🪵 🐠 catch ernestien")
         
     def set_msg(self,msg:discord.Message):
         self.msg = msg
@@ -262,29 +269,39 @@ async def info(inter:discord.Interaction):
     except Exception as exception:
         log_error(exception, "command /info", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
 
+async def collec(dico, inter, precision=""):
+    await inter.response.defer()
+    player_id = str(inter.user.id)
+    if player_id in dico:
+        player = dico[player_id]
+        caught_balls = []
+        for ball_id in balls:
+            if ball_id in player and player[ball_id] != "":
+                caught_balls.append((int(player[ball_id]),emojis[ball_id]+("ₓ"+"".join([mini_digits[c] for c in player[ball_id]]) if player[ball_id] != "1" else "")))
+        caught_balls.sort(key=lambda x: -int(x[0]))
+        text1 = "MicroBalls attrapées "+precision+":\n# " + " ".join([x[1] for x in caught_balls])
+    else:
+        caught_balls = []
+        text1 = "Tu n'as attrapé aucune MicroBall "+precision+"pour l'instant"
+    if len(caught_balls) == len(balls):
+        text2 = "Féliciation, tu as attrapées toutes les MicroBalls "+precision+"! :tada:"
+    else:
+        text2 = "Il te reste " + str(len(balls)-len(caught_balls)) + " MicroBalls à découvrir "+precision
+    await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.blue(),title="Collection de **"+inter.user.display_name+"** "+precision,description=text1+"\n\n"+text2))
+
 @bot.tree.command(name="collection", description="Regarde la liste des MicroBalls que tu as")
 async def collection(inter:discord.Interaction):
     try:
-        await inter.response.defer()
-        player_id = str(inter.user.id)
-        if player_id in players:
-            player = players[player_id]
-            caught_balls = []
-            for ball_id in balls:
-                if ball_id in player and player[ball_id] != "":
-                    caught_balls.append((int(player[ball_id]),emojis[ball_id]+("ₓ"+"".join([mini_digits[c] for c in player[ball_id]]) if player[ball_id] != "1" else "")))
-            caught_balls.sort(key=lambda x: -int(x[0]))
-            text1 = "MicroBalls attrapées :\n# " + " ".join([x[1] for x in caught_balls])
-        else:
-            caught_balls = []
-            text1 = "Tu n'as attrapé aucune MicroBall pour l'instant"
-        if len(caught_balls) == len(balls):
-            text2 = "Féliciation, tu as attrapées toutes les MicroBalls ! :tada:"
-        else:
-            text2 = "Il te reste " + str(len(balls)-len(caught_balls)) + " MicroBalls à découvrir"
-        await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.blue(),title="Collection de **"+inter.user.display_name+"**",description=text1+"\n\n"+text2))
+        await collec(players, inter)
     except Exception as exception:
         log_error(exception, "command /collection", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
+
+@bot.tree.command(name="ernestien-collection", description="Regarde la liste des MicroBalls que tu as attrapé en ernestien")
+async def ernestien_collection(inter:discord.Interaction):
+    try:
+        await collec(players_ern, inter, "en ernestien ")
+    except Exception as exception:
+        log_error(exception, "command /ernestien-collection", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
 
 # go !
 with open(r"./token.lock", 'r') as file:

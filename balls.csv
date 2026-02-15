@@ -1,37 +1,37 @@
-id;img;nom_fr;regex_fr;nom_ens;regex_ens
-ernestie;000;Ernestie;(democratie)?ernestie(nne)?(normalienne)?(et)?(supercoole?)?;ernestô;(nuranjers)?ernestog?(bizarg)?(feltanig)?
-rpd;001;République Participative du Dibistan;(rpd|(république)?(participative|populaire)?(du)?dibistan);semoâ pppppplulâg dâ bistanô;(semoa)?(p+lulag)?(da)?bistano
-vahyxia;002;Vahyxia;vahyxia;tufevaizô;tufevaizo
-crisardie;003;Baronnie de Crisardie;(baron+ie)?(de)?cri[sz]ardie;losô dâ zardiiiô;(loso)?(da)?zardi+o
-ketonie;004;Kétonie;ketonie;nofachô;nofac?ho
-cliponie;005;Cliponie;(republique)?(de)?cliponie;tchirpô;t?c?hirpo
-mougins;006;Empire Mouginois;(empire)?mougin(oi)?s?;polochô dâ kachtotô;(polocho)?(da)?kac?htotog?
-nesquacie;007;Nesquacie;(republique)?(de)?nesquacie;neskuikchokô;(semoa)?(da)?neskuikc?hoko
-rgs;008;République des Gaufres Salées;(rgs|(republique)?(des)?gauf+res+ale+s?);semoâ dâ pludpoaniêi dechvâlg;(semoa)?(da)?plud?poaniei?(dec?hvalg?)?
-ferthroy;009;Principauté de Ferthroy;(principaute)?(de)?ferth?ro[yi];vividpikô dâ kuatrô;(vivi)?(dpiko)?(da)?kuatro
-espradal;010;République Fédérale Socialiste d'Espradal;(republique)?(federale)?(socialiste)?d?e?espradal;semoâ derâlg peêsg dâ felesperlandô;(semoa)?(deralg)?(peesg)?(da)?(fel)?esperlando
-fortunaris_sud;011;Fortunaris du Sud;fortunaris(du)?(sud)?;mrojakpotariô;(mro)?jakpotario
-czb;012;Czestovnie-Beauvence;c[zh]estovnie?b(e?au|o)v[ea]n[cs]e*;kofrpluflavapadrepô;kofrpluflavab?g?padrepo
-fortunaris;013;Fortunaris (ancienne micronation);fortunaris;jakpotariô;jakpotario
-wawangame;014;Wawangame;(republique)?(du)?wawangame;dekodekô;(semoa)?(da)?dekodeko
-cursurie;015;Cursurie;cursurie
-boukistan;016;Boukistan;boukistan;amiksemô;ami(ks|x)emo?
-solarys;017;Principauté de Solarys;(principaute)?(de)?solar[iy]s;vividpikô dâ absradô;(vivi)?(dpiko)?(da)?absrado
-goatopia;018;République de Goatopia;(republique)?(de)?s?(chevres?|goatopia);semoâ dâ veberô;(semoa)?(da)?vebero
-spectre;019;République du Spectre;(republique)?(du)?spectre;semoâ dâ aperiodîk;(semoa)?(da)?aperiodiko?
-royaume_du_the;020;Royaume du Thé;(rdt|(royaume)?(du)?the)
-vesnar;021;Vesnar;vesnar;sursô;surso
-neutronia;022;Neutronia;neutronia
-aerica;023;Empire Aéricain;(empire)?aerica(in)?
-sylvanor;024;Sylvanor;sylvanor;zedasiklô;zedasiklo?
-surmulostan;025;Surmulostan;surmulot?(stan)?
-pilatia;026;Royaume de Pilatia;(royaume)?(de)?pilatia
-vexin;027;Vexin;vexin;jtebudô;c?[jh]tebudo?
-royaume_alger;028;Royaume Islamique d'Alger;(royaume)?(islamique)?d?alger
-legionnaris;029;Légionnaris;legion+aris
-azura;030;Azura;azura
-tulie;031;Saint Empire Tulique;(saint)?(empire)?tuli(qu)?e
-redhanie;032;Rédhanie;rh?edh?anie;peeprosperiteô;pe+prosperiteo?
-shaggystan;033;Grand Empire Shaggystannais;(grand)?(empire)?shagg?ystann?(ais)?
-ehrenia;034;Ehrenia;ehrenia
-celorano;035;Celorano;celorano;eauurinnô;eq?k?au+rin+o?
+id            ; img; nom_fr                                   ; regex_fr                                                    ; nom_ens                            ; regex_ens
+ernestie      ; 000; Ernestie                                 ; (democratie)?ernestie(nne)?(normalienne)?(et)?(supercoole?)?; ernestô                            ; (nuranjers)?ernestog?(bizarg)?(feltanig)?
+rpd           ; 001; République Participative du Dibistan     ; (rpd|(république)?(participative|populaire)?(du)?dibistan)  ; semoâ pppppplulâg dâ bistanô       ; (semoa)?(p+lulag)?(da)?bistano
+vahyxia       ; 002; Vahyxia                                  ; vahyxia                                                     ; tufevaizô                          ; tufevaizo
+crisardie     ; 003; Baronnie de Crisardie                    ; (baron+ie)?(de)?cri[sz]ardie                                ; losô dâ zardiiiô                   ; (loso)?(da)?zardi+o
+ketonie       ; 004; Kétonie                                  ; ketonie                                                     ; nofachô                            ; nofac?ho
+cliponie      ; 005; Cliponie                                 ; (republique)?(de)?cliponie                                  ; tchirpô                            ; t?c?hirpo
+mougins       ; 006; Empire Mouginois                         ; (empire)?mougin(oi)?s?                                      ; polochô dâ kachtotô                ; (polocho)?(da)?kac?htotog?
+nesquacie     ; 007; Nesquacie                                ; (republique)?(de)?nesquacie                                 ; neskuikchokô                       ; (semoa)?(da)?neskuikc?hoko
+rgs           ; 008; République des Gaufres Salées            ; (rgs|(republique)?(des)?gauf+res+ale+s?)                    ; semoâ dâ pludpoaniêi dechvâlg      ; (semoa)?(da)?plud?poaniei?(dec?hvalg?)?
+ferthroy      ; 009; Principauté de Ferthroy                  ; (principaute)?(de)?ferth?ro[yi]                             ; vividpikô dâ kuatrô                ; (vivi)?(dpiko)?(da)?kuatro
+espradal      ; 010; République Fédérale Socialiste d'Espradal; (republique)?(federale)?(socialiste)?d?e?espradal           ; semoâ derâlg peêsg dâ felesperlandô; (semoa)?(deralg)?(peesg)?(da)?(fel)?esperlando
+fortunaris_sud; 011; Fortunaris du Sud                        ; fortunaris(du)?(sud)?                                       ; mrojakpotariô                      ; (mro)?jakpotario
+czb           ; 012; Czestovnie-Beauvence                     ; c[zh]estovnie?b(e?au|o)v[ea]n[cs]e*                         ; kofrpluflavapadrepô                ; kofrpluflavab?g?padrepo
+fortunaris    ; 013; Fortunaris (ancienne micronation)        ; fortunaris                                                  ; jakpotariô                         ; jakpotario
+wawangame     ; 014; Wawangame                                ; (republique)?(du)?wawangame                                 ; dekodekô                           ; (semoa)?(da)?dekodeko
+cursurie      ; 015; Cursurie                                 ; cursurie
+boukistan     ; 016; Boukistan                                ; boukistan                                                   ; amiksemô                           ; ami(ks|x)emo?
+solarys       ; 017; Principauté de Solarys                   ; (principaute)?(de)?solar[iy]s                               ; vividpikô dâ absradô               ; (vivi)?(dpiko)?(da)?absrado
+goatopia      ; 018; République de Goatopia                   ; (republique)?(de)?s?(chevres?|goatopia)                     ; semoâ dâ veberô                    ; (semoa)?(da)?vebero
+spectre       ; 019; République du Spectre                    ; (republique)?(du)?spectre                                   ; semoâ dâ aperiodîk                 ; (semoa)?(da)?aperiodiko?
+royaume_du_the; 020; Royaume du Thé                           ; (rdt|(royaume)?(du)?the)
+vesnar        ; 021; Vesnar                                   ; vesnar                                                      ; sursô                              ; surso
+neutronia     ; 022; Neutronia                                ; neutronia
+aerica        ; 023; Empire Aéricain                          ; (empire)?aerica(in)?
+sylvanor      ; 024; Sylvanor                                 ; sylvanor                                                    ; zedasiklô                          ; zedasiklo?
+surmulostan   ; 025; Surmulostan                              ; surmulot?(stan)?
+pilatia       ; 026; Royaume de Pilatia                       ; (royaume)?(de)?pilatia
+vexin         ; 027; Vexin                                    ; vexin                                                       ; jtebudô                            ; c?[jh]tebudo?
+royaume_alger ; 028; Royaume Islamique d'Alger                ; (royaume)?(islamique)?d?alger
+legionnaris   ; 029; Légionnaris                              ; legion+aris
+azura         ; 030; Azura                                    ; azura
+tulie         ; 031; Saint Empire Tulique                     ; (saint)?(empire)?tuli(qu)?e
+redhanie      ; 032; Rédhanie                                 ; rh?edh?anie                                                 ; peeprosperiteô                     ; pe+prosperiteo?
+shaggystan    ; 033; Grand Empire Shaggystannais              ; (grand)?(empire)?shagg?ystann?(ais)?
+ehrenia       ; 034; Ehrenia                                  ; ehrenia
+celorano      ; 035; Celorano                                 ; celorano                                                    ; eauurinnô                          ; eq?k?au+rin+o?
