@@ -15,6 +15,11 @@ LOGS_CHANNEL_ID = 1463155147625467978  # id of the channel where the logs are se
 ERROR_PING_ROLE_ID = 1467532432872833156
 BOT_ADD_LINK = "https://discord.com/oauth2/authorize?client_id=1462241870158630913&permissions=3072&integration_type=0&scope=bot"
 
+
+#global lock 
+lock = asyncio.Lock()
+
+
 # reading-write csv
 def read_csv(path,sep=";"):
     dico = {}
@@ -137,7 +142,7 @@ class CatchView(discord.ui.View):
         self.caught = False
         self.catcher_name = None
         self.msg = None
-        self.lock = asyncio.Lock()
+        
 
     @discord.ui.button(label="Attraper !", style=discord.ButtonStyle.primary, custom_id="catch")
     async def open_modal(self, inter:discord.Interaction, button: discord.ui.Button):
