@@ -17,7 +17,7 @@ BOT_ADD_LINK = "https://discord.com/oauth2/authorize?client_id=14622418701586309
 
 
 #global lock 
-lock = asyncio.Lock()
+#lock = asyncio.Lock()
 
 
 # reading-write csv
@@ -114,7 +114,7 @@ class BoxModal(discord.ui.Modal):
 
     async def on_submit(self, inter:discord.Interaction):
         try:
-            lock.acquire()
+            #lock.acquire()
             if self.caught_view.caught:
                 await inter.response.send_message("Désolé **"+inter.user.display_name+"**, la MicroBall a déjà été attrapée par **"+self.caught_view.catcher_name+"**")
                 return
@@ -131,7 +131,7 @@ class BoxModal(discord.ui.Modal):
                 await self.caught_view.catch(inter.user, raw_awnser, ernestien=True)
             else:
                 await inter.response.send_message("Désolé **"+inter.user.display_name+"**, ce n'est pas le bon nom")
-                lock.release()
+                #lock.release()
         except Exception as exception:
             log_error(exception, "BoxModal on_submit", guild=(inter.guild.name,inter.guild_id), ball=self.ball_id, caught=self.caught_view.caught)
 
@@ -183,7 +183,7 @@ class CatchView(discord.ui.View):
         await log_channel["channel"].send(" 🪵 🤚  catch │ player: "+catcher.name+" │ ball: "+str(ball_id)+" │ guild: "+self.msg.guild.name, "│ awnser: "+awnser)
         if ernestien:
             await log_channel["channel"].send(" 🪵 🐠 catch ernestien")
-        lock.release()
+        #lock.release()
         
     def set_msg(self,msg:discord.Message):
         self.msg = msg
