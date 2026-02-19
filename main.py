@@ -183,7 +183,7 @@ class CatchView(discord.ui.View):
         await log_channel["channel"].send(" 🪵 🤚  catch │ player: "+catcher.name+" │ ball: "+str(ball_id)+" │ guild: "+self.msg.guild.name, "│ awnser: "+awnser)
         if ernestien:
             await log_channel["channel"].send(" 🪵 🐠 catch ernestien")
-        self.release()
+        lock.release()
         
     def set_msg(self,msg:discord.Message):
         self.msg = msg
