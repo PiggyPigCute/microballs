@@ -115,9 +115,11 @@ class BoxModal(discord.ui.Modal):
             awnser = normalize_text(raw_awnser)
             ball = balls[self.ball_id]
             if re.match(ball["regex_fr"], awnser) != None:
+                self.caught_view.caught = True
                 await inter.response.send_message("Bravo <@"+str(inter.user.id)+">, tu as capturé **"+ball["nom_fr"]+"** !")
                 await self.caught_view.catch(inter.user, raw_awnser, ernestien=False)
             elif "regex_ens" in ball and re.match(ball["regex_ens"], awnser) != None:
+                self.caught_view.caught = True
                 await inter.response.send_message("Bravo <@"+str(inter.user.id)+">, tu as capturé **"+"".join([ernestien[c] for c in ball["nom_ens"]])+"** !\n-# (Ces caractères étranges sont de l'ernestien, la langue de l'Ernestie. "+inter.user.display_name+" vient d'attraper la MicroBall en écrivant le nom en ernestien)")
                 await self.caught_view.catch(inter.user, raw_awnser, ernestien=True)
             else:
@@ -141,7 +143,6 @@ class CatchView(discord.ui.View):
             log_error(excepction, "CatchView open_modal", guild=(inter.guild.name,inter.guild_id), ball=self.ball_id)
     
     async def catch(self, catcher:discord.Member, awnser, ernestien):
-        self.caught = True
         self.catcher_name = catcher.display_name
         self.disabled = True
         await self.msg.edit(view=None)
