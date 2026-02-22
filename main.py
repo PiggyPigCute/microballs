@@ -11,10 +11,10 @@ PROBA = 0.04  # probability of sending a ball when a msg is sent
 WAIT_DURATION = 10  # time (in seconds) after a msg is sent, during this time the msg are ignored
 EMOJI_GUILD_ID = 1462239696418635840  # id of the guild where the the emojis are stored (here, the MicroBall guild)
 LOGS_GUILD_ID = 1462239696418635840  # id of the guild where the logs are sent
-LOGS_CHANNEL_ID = 1463155147625467978  # id of the channel where the logs are sent
+LOGS_MAIN_CHANNEL_ID = 1463155147625467978  # id of the channel where the logs (other than "trigger") are sent
+LOGS_TRIGGER_CHANNEL_ID = 1475267245461733467 # od of the channel where the "trigger" logs are sent
 ERROR_PING_ROLE_ID = 1467532432872833156
 BOT_ADD_LINK = "https://discord.com/oauth2/authorize?client_id=1462241870158630913&permissions=3072&integration_type=0&scope=bot"
-
 
 #global lock 
 #lock = asyncio.Lock()
@@ -58,7 +58,7 @@ players_ern = read_csv(r"./players_ern.csv")
 
 # variables set during on_ready()
 emojis = {}
-log_channel = {}
+log_channels = {}
 
 # technical constants
 mini_digits = {'1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉'}
@@ -72,7 +72,7 @@ last_triggers = {int(guild_id):current_time for guild_id in spawn_channels}
 
 # log errors
 async def log_error(exception, type="", **kwargs):
-    await log_channel["channel"].send("# :boom: Erreur !\n```ansi\n[2;33m"+type+"\n[2;1;4;31m"+str(exception)+"\n[0m[2;36m"+"\n".join(["- "+key+" : "+repr(kwargs[key]) for key in kwargs])+"```\n-# <@&"+str(ERROR_PING_ROLE_ID)+">")
+    await log_channels["main"].send("# :boom: Erreur !\n```ansi\n[2;33m"+type+"\n[2;1;4;31m"+str(exception)+"\n[0m[2;36m"+"\n".join(["- "+key+" : "+repr(kwargs[key]) for key in kwargs])+"```\n-# <@&"+str(ERROR_PING_ROLE_ID)+">")
 
 # bot initialization
 class CustomHelpCommand(commands.HelpCommand):
@@ -125,10 +125,12 @@ class BoxModal(discord.ui.Modal):
                 self.caught_view.caught = True
                 await inter.response.send_message("Bravo <@"+str(inter.user.id)+">, tu as capturé **"+ball["nom_fr"]+"** !")
                 await self.caught_view.catch(inter.user, raw_awnser, ernestien=False)
+                await log_channels["main"].send(" 🪵 🤚  catch │ player: "+inter.user.name+" │ ball: "+str(self.ball_id)+" │ guild: "+self.caught_view.msg.guild.name, "│ awnser: "+raw_awnser)
             elif "regex_ens" in ball and re.match(ball["regex_ens"], awnser) != None:
                 self.caught_view.caught = True
                 await inter.response.send_message("Bravo <@"+str(inter.user.id)+">, tu as capturé **"+"".join([ernestien[c] for c in ball["nom_ens"]])+"** !\n-# (Ces caractères étranges sont de l'ernestien, la langue de l'Ernestie. "+inter.user.display_name+" vient d'attraper la MicroBall en écrivant le nom en ernestien)")
                 await self.caught_view.catch(inter.user, raw_awnser, ernestien=True)
+                await log_channels["main"].send(" 🪵 🤚 🐠 ernest catch │ player: "+inter.user.name+" │ ball: "+str(self.ball_id)+" │ guild: "+self.caught_view.msg.guild.name, "│ awnser: "+raw_awnser)
             else:
                 await inter.response.send_message("Désolé **"+inter.user.display_name+"**, ce n'est pas le bon nom")
                 #lock.release()
@@ -180,9 +182,6 @@ class CatchView(discord.ui.View):
                 players_ern[catcher_id][ball_id] = "1"
         write_csv(r"./players.csv",players,players_keys)
         write_csv(r"./players_ern.csv",players_ern,players_keys)
-        await log_channel["channel"].send(" 🪵 🤚  catch │ player: "+catcher.name+" │ ball: "+str(ball_id)+" │ guild: "+self.msg.guild.name, "│ awnser: "+awnser)
-        if ernestien:
-            await log_channel["channel"].send(" 🪵 🐠 catch ernestien")
         #lock.release()
         
     def set_msg(self,msg:discord.Message):
@@ -195,12 +194,15 @@ async def on_ready():
     for guild in bot.guilds:
         print("│",guild.name)
     print("└──────────────────────────────┘")
-    log_channel["channel"] = bot.get_guild(LOGS_GUILD_ID).get_channel(LOGS_CHANNEL_ID)
-    await log_channel["channel"].send(" 🪵 🎊  Let's Go !")
+    log_channels["main"] = bot.get_guild(LOGS_GUILD_ID).get_channel(LOGS_MAIN_CHANNEL_ID)
+    log_channels["trigger"] = bot.get_guild(LOGS_GUILD_ID).get_channel(LOGS_TRIGGER_CHANNEL_ID)
+    await log_channels["main"].send(" 🪵 🎊  Let's Go !")
     for emoji in bot.get_guild(EMOJI_GUILD_ID).emojis:
         emojis[emoji.name] = "<:"+emoji.name+":"+str(emoji.id)+"> "
     # for guild_id in spawn_channels:
-    #     await bot.get_guild(int(guild_id)).get_channel(int(spawn_channels[guild_id]["channel_id"])).send("Sorry, je suis tout cassé depuis quelques heures, les MicroBalls ci-dessus ne pourront plus être récupérer et normalement je re-fonctionne ^^")
+    #     await bot.get_guild(int(guild_id)).get_channel(int(spawn_channels[guild_id]["channel_id"])).send(
+    #         "Sorry, je suis tout cassé depuis quelques heures, les MicroBalls ci-dessus ne pourront plus être récupérer et normalement je re-fonctionne ^^"
+    #     )
     print("Let's go !")
 
 @bot.event
@@ -212,7 +214,7 @@ async def on_message(message:discord.Message):
         str_guild_id = str(int_guild_id)
 
         if not str_guild_id in spawn_channels:
-            await log_channel["channel"].send(" 🪵 📜  unregistered channel │ guild: "+message.guild.name+" │ guild_id: "+str_guild_id)
+            await log_channels["main"].send(" 🪵 📜  unregistered channel │ guild: "+message.guild.name+" │ guild_id: "+str_guild_id)
             return
 
         current_time = time.time()
@@ -222,21 +224,21 @@ async def on_message(message:discord.Message):
         try:
             channel = message.guild.get_channel(int(spawn_channels[str_guild_id]["channel_id"]))
         except:
-            await log_channel["channel"].send(" 🪵 🤔 erreur get_channel │ guild: "+message.guild.name+" │ channel_id: "+spawn_channels[str_guild_id]["channel_id"])
+            await log_channels["main"].send(" 🪵 🤔 erreur get_channel │ guild: "+message.guild.name+" │ channel_id: "+spawn_channels[str_guild_id]["channel_id"])
             return
 
         rand = random.random()
-        await log_channel["channel"].send("-# 🪵 🌿  trigger │ guild: "+message.guild.name+" │ rand: "+str(rand))
+        await log_channels["trigger"].send(" 🪵 🌿  trigger │ guild: "+message.guild.name+" │ rand: "+str(rand))
         if rand < PROBA:
             ball_id = random.choice(balls_id)
-            await log_channel["channel"].send(" 🪵 🏀  microball │ ball: "+ball_id+" │ guild: "+message.guild.name)
+            await log_channels["main"].send(" 🪵 🏀  microball │ ball: "+ball_id+" │ guild: "+message.guild.name)
             with open("./img/"+balls[ball_id]["img"]+".png", "rb") as file:
                 picture = discord.File(file)
             view = CatchView(ball_id)
             try:
                 msg = await channel.send("Une MicroBall vient d'apparaître !\n** **", file=picture, view=view)
             except:
-                await log_channel["channel"].send(" 🪵 ⛔ **forbidden ball │ ball: "+ball_id+" │ guild: "+message.guild.name+"**")
+                await log_channels["main"].send(" 🪵 ⛔ **forbidden ball │ ball: "+ball_id+" │ guild: "+message.guild.name+"**")
             view.set_msg(msg)
     except Exception as exception:
         await log_error(exception, "@bot.event on_messages", guild=(message.guild.name,message.guild.id), author=(message.author.name,message.author.id), channel=(message.channel.name,message.channel.id))
@@ -250,7 +252,7 @@ async def set_channel(inter:discord.Interaction):
             if guild.id == inter.guild_id:
                 app_without_bot = False
         if app_without_bot:
-            await log_channel["channel"].send(" 🪵 👻 set-channel app_without_bot │ guild: "+inter.guild.name+" ("+str(inter.guild_id)+") │ user: "+inter.user.name)
+            await log_channels["main"].send(" 🪵 👻 set-channel app_without_bot │ guild: "+inter.guild.name+" ("+str(inter.guild_id)+") │ user: "+inter.user.name)
             await inter.followup.send("👻 Je ne suis pas sur ce serveur, l'application a été installée mais pas le bot n'a pas été ajouté.\nTu peux utiliser ce lien pour ajouter le bot : "+BOT_ADD_LINK, ephemeral=True)
         if inter.user.guild_permissions.manage_channels or inter.user.guild_permissions.administrator or inter.guild.owner_id == inter.user.id:
             guild_id = str(inter.guild.id)
@@ -262,9 +264,9 @@ async def set_channel(inter:discord.Interaction):
                 last_triggers[inter.guild.id] = time.time()
             write_csv("./channels.csv",spawn_channels,("guild_id","channel_id","special"))
             await inter.followup.send("Dans le serveur **"+inter.guild.name+"**, les MicroBalls vont apparaître dans le salon **<#"+str(inter.channel.id)+">**", ephemeral=True)
-            await log_channel["channel"].send(" 🪵 🔧 set-channel │ guild: "+inter.guild.name+" │ channel: "+inter.channel.name+" │ user: "+inter.user.name)
+            await log_channels["main"].send(" 🪵 🔧 set-channel │ guild: "+inter.guild.name+" │ channel: "+inter.channel.name+" │ user: "+inter.user.name)
         else:
-            await log_channel["channel"].send(" 🪵 🤐 set-channel no permission │ guild: "+inter.guild.name+" │ user: "+inter.user.name)
+            await log_channels["main"].send(" 🪵 🤐 set-channel no permission │ guild: "+inter.guild.name+" │ user: "+inter.user.name)
             await inter.followup.send("⚠️ Il vous faut la permission **`manage-channels`** pour exécuter cette commande :)", ephemeral=True)
     except Exception as exception:
         log_error(exception, "command /set-channel", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
