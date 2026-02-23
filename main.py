@@ -193,7 +193,7 @@ class CatchView(discord.ui.View):
 @bot.event
 async def on_ready():
     await bot.tree.sync()
-    guilds_list = "\n┌─ Guilds where MicroBalls is ─┐" + "\n│ ".join([guild.name for guild in bot.guilds]) + "└──────────────────────────────┘"
+    guilds_list = "\n┌─ Guilds where MicroBalls is ─┐\n" + "\n│ ".join([guild.name for guild in bot.guilds]) + " \n└──────────────────────────────┘"
     print(guilds_list)
     log_channels["main"] = bot.get_guild(LOGS_GUILD_ID).get_channel(LOGS_MAIN_CHANNEL_ID)
     log_channels["trigger"] = bot.get_guild(LOGS_GUILD_ID).get_channel(LOGS_TRIGGER_CHANNEL_ID)
