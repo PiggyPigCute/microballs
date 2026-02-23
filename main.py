@@ -193,13 +193,15 @@ class CatchView(discord.ui.View):
 @bot.event
 async def on_ready():
     await bot.tree.sync()
-    print("┌─ Guilds where MicroBalls is ─┐")
-    for guild in bot.guilds:
-        print("│",guild.name)
-    print("└──────────────────────────────┘")
     log_channels["main"] = bot.get_guild(LOGS_GUILD_ID).get_channel(LOGS_MAIN_CHANNEL_ID)
     log_channels["trigger"] = bot.get_guild(LOGS_GUILD_ID).get_channel(LOGS_TRIGGER_CHANNEL_ID)
     await log_channels["main"].send(" 🪵 🎊  Let's Go !")
+    await log_channels["main"].send("* Liste des servs:")
+    print("┌─ Guilds where MicroBalls is ─┐")
+    for guild in bot.guilds:
+        print("│",guild.name)
+        await log_channels["main"].send("  * "+guild.name)
+    print("└──────────────────────────────┘")
     for emoji in bot.get_guild(EMOJI_GUILD_ID).emojis:
         emojis[emoji.name] = "<:"+emoji.name+":"+str(emoji.id)+"> "
     # for guild_id in spawn_channels:
