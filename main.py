@@ -125,7 +125,10 @@ class BoxModal(discord.ui.Modal):
                 self.caught_view.caught = True
                 await inter.response.send_message("Bravo <@"+str(inter.user.id)+">, tu as capturé **"+ball["nom_fr"]+"** !")
                 await self.caught_view.catch(inter.user, raw_awnser, ernestien=False)
-                await log_channels["main"].send(" 🪵 🤚  catch │ player: "+inter.user.name+" │ ball: "+str(self.ball_id)+" │ guild: "+self.caught_view.msg.guild.name, "│ awnser: "+raw_awnser)
+                await log_channels["main"].send(" 🪵 🤚  catch │ player: "+inter.user.name)
+                await log_channels["main"].send(" 🪵 🤚  catch │ ball: "+str(self.ball_id))
+                await log_channels["main"].send(" 🪵 🤚  catch │ guild: "+self.caught_view.msg.guild.name)
+                await log_channels["main"].send(" 🪵 🤚  catch │ awnser: "+raw_awnser)
             elif "regex_ens" in ball and re.match(ball["regex_ens"], awnser) != None:
                 self.caught_view.caught = True
                 await inter.response.send_message("Bravo <@"+str(inter.user.id)+">, tu as capturé **"+"".join([ernestien[c] for c in ball["nom_ens"]])+"** !\n-# (Ces caractères étranges sont de l'ernestien, la langue de l'Ernestie. "+inter.user.display_name+" vient d'attraper la MicroBall en écrivant le nom en ernestien)")
