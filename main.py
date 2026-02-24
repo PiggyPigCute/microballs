@@ -61,7 +61,7 @@ emojis = {}
 log_channels = {}
 
 # technical constants
-mini_digits = {'1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉'}
+mini_digits = "₀₁₂₃₄₅₆₇₈₉"
 diacritics = {"a":"àâä","c":"ç","e":"éèêï","i":"îï","o":"ôö","u":"ûü"}
 letters = "abcdefghijklmnopqrstuvwxyz"
 ernestien = {"a":"n","â":"n̂","b":"Ր","d":"Þ","e":"c","ê":"ĉ","f":"ɸ","g":"ᕋ","h":"ʃ","i":"ı","ê":"î","j":"J","k":"¢","l":"ʟ̥","m":"ᒐ","n":"ᒉ","o":"o","ô":"ô","p":"г̊","r":"Ꞁ̊","s":"c̥","t":"⟊","u":"u","û":"û","v":"v̥","z":"∤"," ":" "}
@@ -294,7 +294,7 @@ async def collec(dico, inter, precision=""):
         caught_balls = []
         for ball_id in balls:
             if ball_id in player and player[ball_id] != "":
-                caught_balls.append((int(player[ball_id]),emojis[ball_id]+("ₓ"+"".join([mini_digits[c] for c in player[ball_id]]) if player[ball_id] != "1" else "")))
+                caught_balls.append((int(player[ball_id]),emojis[ball_id]+("ₓ"+"".join([mini_digits[int(c)] for c in player[ball_id]]) if player[ball_id] != "1" else "")))
         caught_balls.sort(key=lambda x: -int(x[0]))
         text1 = "MicroBalls attrapées "+precision+":\n# " + " ".join([x[1] for x in caught_balls])
     else:
