@@ -197,10 +197,10 @@ async def on_ready():
     await log_channels["main"].send(guilds_list.replace("\n","\n-# "))
     for emoji in bot.get_guild(EMOJI_GUILD_ID).emojis:
         emojis[emoji.name] = "<:"+emoji.name+":"+str(emoji.id)+"> "
-    # for guild_id in spawn_channels:
-    #     await bot.get_guild(int(guild_id)).get_channel(int(spawn_channels[guild_id]["channel_id"])).send(
-    #         "Sorry, je suis tout cassé depuis quelques heures, les MicroBalls ci-dessus ne pourront plus être récupérer et normalement je re-fonctionne ^^"
-    #     )
+    for guild_id in spawn_channels:
+        await bot.get_guild(int(guild_id)).get_channel(int(spawn_channels[guild_id]["channel_id"])).send(
+            "Salut, la commande pour pouvoir s'échanger des MicroBalls arrive, pendant le temps de dev il peut il y a avoir des deconexions du bot"
+        )
     print("Let's go !")
 
 @bot.event
