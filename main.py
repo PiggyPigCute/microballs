@@ -209,11 +209,14 @@ class CatchView(discord.ui.View):
             await log_error(excepction, "CatchView open_modal", guild=(inter.guild.name,inter.guild_id), ball=self.ball_id)
     
     async def catch(self, catcher:discord.Member, awnser, ernestien:bool):
-        self.catcher_name = catcher.display_name
-        self.disabled = True
-        await self.msg.edit(view=None)
-        catcher_id, ball_id = str(catcher.id), str(self.ball_id)
-        edit_ball_counts(catcher_id, ball_id, 1, ernestien)
+        try:
+            self.catcher_name = catcher.display_name
+            self.disabled = True
+            await self.msg.edit(view=None)
+            catcher_id, ball_id = str(catcher.id), str(self.ball_id)
+            edit_ball_counts(catcher_id, ball_id, 1, ernestien)
+        except Exception as exception:
+            await log_error(exception, "CatchView catch", caught=self.caught, ball=self.ball_id, catcher_name=self.catcher_name)
         
     def set_msg(self,msg:discord.Message):
         self.msg = msg
