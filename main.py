@@ -320,10 +320,10 @@ async def ernestien_collection(inter:discord.Interaction):
 @discord.app_commands.choices(ball_id=[discord.app_commands.Choice(name=balls[ball_id]["nom_fr"], value=ball_id) for ball_id in balls_id])
 @discord.app_commands.describe(ball_id="MicroBall que vous voulez offrir")
 @discord.app_commands.describe(destinataire="Personne à qui vous voulez offrir cette MicroBall")
-@discord.app_commands.choices(langue=[discord.app_commands.Choice(name="Français", value=False),
-                                      discord.app_commands.Choice(name="Ernestien", value=True)])
+@discord.app_commands.choices(langue=[discord.app_commands.Choice(name="Français", value=0),
+                                      discord.app_commands.Choice(name="Ernestien", value=1)])
 @discord.app_commands.describe(langue="Voulez-vous donner la version ernestienne de la MicroBall")
-async def cadeau(inter:discord.Interaction, ball_id:str, destinataire:discord.User, langue:bool=False):
+async def cadeau(inter:discord.Interaction, ball_id:str, destinataire:discord.User, langue:int=0):
     try:
         await inter.response.defer()
         sender_id = str(inter.user.id)
