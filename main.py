@@ -21,7 +21,13 @@ BOT_ADD_LINK = "https://discord.com/oauth2/authorize?client_id=14622418701586309
 
 
 # reading-write csv
-def read_csv(path,sep=";"):
+def read_csv(path, sep=";") -> dict:
+    # read a CSV file and store the result in a dictionary
+    # → 𝑝𝑎𝑡ℎ: path (relative or not) of the CSV file
+    # → 𝑠𝑒𝑝: separator used in the CSV file
+    # the format of the output dictionary can be described like this :
+    #   if we see the CSV file as a matrix Aᵢⱼ (where A₀ⱼ is the first line)
+    #   then 𝑑𝑖𝑐𝑜[Aᵢ₀][A₀ⱼ] = Aᵢⱼ
     dico = {}
     with open(path,'r',encoding="utf-8") as file:
         lines = file.read().split('\n')
@@ -36,7 +42,13 @@ def read_csv(path,sep=";"):
             dico[split[0]] = item
     return dico
 
-def write_csv(path,dico:dict,keys,sep=";"):
+def write_csv(path, dico:dict, keys:list[str], sep=";"):
+    # fill a CSV file from a dictionary
+    # → 𝑝𝑎𝑡ℎ: path (relative or not) of the CSV file
+    # → 𝑑𝑖𝑐𝑜: dict in the same format as the output of 𝑟𝑒𝑎𝑑_𝑐𝑠𝑣()
+    # → 𝑘𝑒𝑦𝑠: list of the names that will appear on the first line
+    #           (used to know the order of the columns)
+    # → 𝑠𝑒𝑝: seperator used in the CSV file
     text = sep.join(keys)
     for mini_dico in dico.values():
         text += '\n'
@@ -84,10 +96,12 @@ class CustomHelpCommand(commands.HelpCommand):
 bot = commands.Bot(command_prefix="/", intents=discord.Intents.default(), help_command=CustomHelpCommand())
 
 # functions
-def transcription_ernestien(text):
+def transcription_ernestien(text:str) -> str:
+    # use the 𝑒𝑟𝑛𝑒𝑠𝑡𝑖𝑒𝑛 to write with ernestian alphabet from a 𝑡𝑒𝑥𝑡 written with the latin alphabet
     return "".join([ernestien[c] for c in text])
 
-def normalize_text(text):
+def normalize_text(text:str):
+    # lower uppercases, remove diactrics and pop other special chars
     result = ""
     for c in text.lower():
         if c in letters:
@@ -98,12 +112,19 @@ def normalize_text(text):
                     result += a
     return result
 
-def edit_ball_dico(player_id:str,ball_id:str,n:int,dico:dict):
+def edit_ball_dico(player_id:str, ball_id:str, n:int, dico:dict):
+    # add 𝑛 balls to a player in the database
+    # → 𝑝𝑙𝑎𝑦𝑒𝑟_𝑖𝑑: string id of the player
+    # → 𝑏𝑎𝑙𝑙_𝑖𝑑: ball that we want to add
+    # → 𝑛: amount of balls added (can be negative)
+    # → 𝑑𝑖𝑐𝑜: always 𝑝𝑙𝑎𝑦𝑒𝑟𝑠 or 𝑝𝑙𝑎𝑦𝑒𝑟𝑠_𝑒𝑟𝑛
     if player_id in dico:
         player = dico[player_id]
         if ball_id in player and player[ball_id] != "":
-            player[ball_id] = str(n+int(player[ball_id]))
-            if player[ball_id] == "0":
+            new_value = n+int(player[ball_id])
+            if new_value>0:
+                player[ball_id] = str(new_value)
+            else:
                 player[ball_id] = ""
         else:
             player[ball_id] = str(n)
@@ -113,7 +134,13 @@ def edit_ball_dico(player_id:str,ball_id:str,n:int,dico:dict):
             dico[player_id][ball] = ""
         dico[player_id][ball_id] = "1"
 
-def edit_ball_counts(player_id:str,ball_id:str,n:int,ernestien:bool):
+def edit_ball_counts(player_id:str, ball_id:str, n:int, ernestien:bool):
+    # add 𝑛 balls to a player in the database
+    # → 𝑝𝑙𝑎𝑦𝑒𝑟_𝑖𝑑: string id of the player
+    # → 𝑏𝑎𝑙𝑙_𝑖𝑑: ball that we want to add
+    # → 𝑛: amount of balls added (can be negative)
+    # → 𝑒𝑟𝑛𝑒𝑠𝑡𝑖𝑒𝑛: if False, only add balls in 𝑝𝑙𝑎𝑦𝑒𝑟𝑠
+    #             if True, add balls in 𝑝𝑙𝑎𝑦𝑒𝑟𝑠 and 𝑝𝑙𝑎𝑦𝑒𝑟𝑠_𝑒𝑟𝑛
     edit_ball_dico(player_id,ball_id,n,players)
     write_csv(r"./players.csv",players,players_keys)
     if ernestien:
