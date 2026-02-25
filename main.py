@@ -327,7 +327,7 @@ async def ernestien_collection(inter:discord.Interaction):
 @discord.app_commands.describe(langue="Voulez-vous donner la version ernestienne de la MicroBall")
 async def cadeau(inter:discord.Interaction, ball_id:str, destinataire:discord.User, langue:int=0):
     try:
-        await inter.response.defer(ephemeral=True)
+        await inter.response.defer()
         sender_id = str(inter.user.id)
         if (players_ern if langue else players)[sender_id][ball_id] == "":
             await inter.followup.send("Désolé, tu ne possèdes cette MicroBall", ephemeral=True)
@@ -336,7 +336,7 @@ async def cadeau(inter:discord.Interaction, ball_id:str, destinataire:discord.Us
             dest_id = str(destinataire.id)
             edit_ball_counts(sender_id, ball_id, -1, langue)
             edit_ball_counts(dest_id, ball_id, 1, langue)
-            await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.blue(),title="Cadeau !",description="**"+inter.user.name+"** a offert **"+balls[ball_id]["nom_ens" if langue else "nom_fr"]+"** à <@"+dest_id+">"), ephemeral=False)
+            await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.blue(),title="Cadeau !",description="**"+inter.user.name+"** a offert **"+balls[ball_id]["nom_ens" if langue else "nom_fr"]+"** à <@"+dest_id+">"))
             await log_channels["main"].send(" 🪵 🎁 cadeau │ sender: "+inter.user.name+" │ ball_id: "+ball_id+" │ to: "+dest_id+(" │ ernestien" if langue else " │ français"))
     except Exception as exception:
         await log_error(exception, "command /cadeau", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
