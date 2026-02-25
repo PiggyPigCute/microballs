@@ -100,6 +100,8 @@ def edit_ball_dico(player_id:str,ball_id:str,n:int,dico:dict):
         player = dico[player_id]
         if ball_id in player and player[ball_id] != "":
             player[ball_id] = str(n+int(player[ball_id]))
+            if player[ball_id] == "0":
+                player[ball_id] = ""
         else:
             player[ball_id] = str(n)
     else:
@@ -334,7 +336,7 @@ async def cadeau(inter:discord.Interaction, ball_id:str, destinataire:discord.Us
             dest_id = str(destinataire.id)
             edit_ball_counts(sender_id, ball_id, -1, langue)
             edit_ball_counts(dest_id, ball_id, 1, langue)
-            await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.blue(),title="Cadeau !",description="**"+inter.user.name+"** a offert **"+balls[ball_id]["nom_ens" if langue else "nom_fr"]+"** à <@"+dest_id+">"))
+            await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.blue(),title="Cadeau !",description="**"+inter.user.name+"** a offert **"+balls[ball_id]["nom_ens" if langue else "nom_fr"]+"** à <@"+dest_id+">"), ephemeral=False)
             await log_channels["main"].send(" 🪵 🎁 cadeau │ sender: "+inter.user.name+" │ ball_id: "+ball_id+" │ to: "+dest_id+(" │ ernestien" if langue else " │ français"))
     except Exception as exception:
         await log_error(exception, "command /cadeau", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
