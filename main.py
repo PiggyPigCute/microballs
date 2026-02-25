@@ -287,7 +287,7 @@ async def info(inter:discord.Interaction):
     except Exception as exception:
         await log_error(exception, "command /info", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
 
-async def collec(dico, inter, precision=""):
+async def collec(dico, inter, precision="", color=discord.Color.blue()):
     await inter.response.defer()
     player_id = str(inter.user.id)
     if player_id in dico:
@@ -305,7 +305,7 @@ async def collec(dico, inter, precision=""):
         text2 = "Féliciation, tu as attrapées toutes les MicroBalls "+precision+"! :tada:"
     else:
         text2 = "Il te reste " + str(len(balls)-len(caught_balls)) + " MicroBalls à découvrir "+precision
-    await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.blue(),title="Collection de **"+inter.user.display_name+"** "+precision,description=text1+"\n\n"+text2))
+    await inter.followup.send(embed=discord.embeds.Embed(color=color,title="Collection de **"+inter.user.display_name+"** "+precision,description=text1+"\n\n"+text2))
 
 @bot.tree.command(name="collection", description="Regarde la liste des MicroBalls que tu as")
 async def collection(inter:discord.Interaction):
@@ -317,7 +317,7 @@ async def collection(inter:discord.Interaction):
 @bot.tree.command(name="ernestien-collection", description="Regarde la liste des MicroBalls que tu as attrapé en ernestien")
 async def ernestien_collection(inter:discord.Interaction):
     try:
-        await collec(players_ern, inter, "en ernestien ")
+        await collec(players_ern, inter, "en ernestien ", discord.Color.yellow())
     except Exception as exception:
         await log_error(exception, "command /ernestien-collection", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
 
