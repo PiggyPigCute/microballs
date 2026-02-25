@@ -84,6 +84,9 @@ class CustomHelpCommand(commands.HelpCommand):
 bot = commands.Bot(command_prefix="/", intents=discord.Intents.default(), help_command=CustomHelpCommand())
 
 # functions
+def transcription_ernestien(text):
+    return "".join([ernestien[c] for c in text])
+
 def normalize_text(text):
     result = ""
     for c in text.lower():
@@ -153,7 +156,7 @@ class BoxModal(discord.ui.Modal):
                 # await log_channels["main"].send(" 🪵 🤚  catch │ awnser: "+raw_awnser)
             elif "regex_ens" in ball and re.match(ball["regex_ens"], awnser) != None:
                 self.caught_view.caught = True
-                await inter.response.send_message("Bravo <@"+str(inter.user.id)+">, tu as capturé **"+"".join([ernestien[c] for c in ball["nom_ens"]])+"** !\n-# (Ces caractères étranges sont de l'ernestien, la langue de l'Ernestie. "+inter.user.display_name+" vient d'attraper la MicroBall en écrivant le nom en ernestien)")
+                await inter.response.send_message("Bravo <@"+str(inter.user.id)+">, tu as capturé **"+transcription_ernestien(ball["nom_ens"])+"** !\n-# (Ces caractères étranges sont de l'ernestien, la langue de l'Ernestie. "+inter.user.display_name+" vient d'attraper la MicroBall en écrivant le nom en ernestien)")
                 await self.caught_view.catch(inter.user, raw_awnser, ernestien=True)
                 # await log_channels["main"].send(" 🪵 🤚 🐠 ernest catch │ player: "+inter.user.name+" │ ball: "+str(self.ball_id)+" │ guild: "+self.caught_view.msg.guild.name, "│ awnser: "+raw_awnser)
             else:
@@ -336,8 +339,8 @@ async def cadeau(inter:discord.Interaction, ball_id:str, destinataire:discord.Us
             dest_id = str(destinataire.id)
             edit_ball_counts(sender_id, ball_id, -1, langue)
             edit_ball_counts(dest_id, ball_id, 1, langue)
-            await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.blue(),title=":gift: Cadeau !",description="<@"+sender_id+"> a offert **"+balls[ball_id]["nom_ens" if langue else "nom_fr"]+"** à <@"+dest_id+">"))
-            await log_channels["main"].send(" 🪵 🎁 cadeau │ sender: "+inter.user.name+" │ ball_id: "+ball_id+" │ to: "+dest_id+(" │ ernestien" if langue else " │ français"))
+            await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.blue(),title=":gift: Cadeau !",description="<@"+sender_id+"> a offert **"+(transcription_ernestien(balls[ball_id]["nom_ens"]) if langue else balls[ball_id]["nom_fr"])+"** à <@"+dest_id+">"))
+            await log_channels["main"].send(" 🪵 🎁 cadeau │ sender: "+inter.user.name+" │ ball_id: "+ball_id+" │ to: "+destinataire.name+(" │ ernestien" if langue else " │ français"))
     except Exception as exception:
         await log_error(exception, "command /cadeau", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
 
