@@ -317,8 +317,8 @@ async def ernestien_collection(inter:discord.Interaction):
         log_error(exception, "command /ernestien-collection", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
 
 @bot.tree.command(name="cadeau", description="Offre une MicroBall à quelqu'un")
-@discord.app_commands.choices(ball=[discord.app_commands.Choice(name=balls[ball_id]["nom_fr"], value=ball_id) for ball_id in balls_id])
-@discord.app_commands.describe(ball="MicroBall que vous voulez offrir")
+@discord.app_commands.choices(ball_id=[discord.app_commands.Choice(name=balls[ball_id]["nom_fr"], value=ball_id) for ball_id in balls_id])
+@discord.app_commands.describe(ball_id="MicroBall que vous voulez offrir")
 @discord.app_commands.describe(destinataire="Personne à qui vous voulez offrir cette MicroBall")
 @discord.app_commands.choices(langue=[discord.app_commands.Choice(name="Français", value=False),
                                       discord.app_commands.Choice(name="Ernestien", value=True)])
