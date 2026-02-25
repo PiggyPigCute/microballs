@@ -95,6 +95,26 @@ def normalize_text(text):
                     result += a
     return result
 
+def edit_ball_dico(player_id:str,ball_id:str,n:int,dico:dict):
+    if player_id in dico:
+        player = dico[player_id]
+        if ball_id in player and player[ball_id] != "":
+            player[ball_id] = str(n+int(player[ball_id]))
+        else:
+            player[ball_id] = str(n)
+    else:
+        dico[player_id] = {"player_id":player_id}
+        for ball in balls_id:
+            dico[player_id][ball] = ""
+        dico[player_id][ball_id] = "1"
+
+def edit_ball_counts(player_id:str,ball_id:str,n:int,ernestien:bool):
+    edit_ball_dico(player_id,ball_id,n,players)
+    write_csv(r"./players.csv",players,players_keys)
+    if ernestien:
+        edit_ball_dico(player_id,ball_id,n,players_ern)
+        write_csv(r"./players_ern.csv",players_ern,players_keys)
+
 class BoxModal(discord.ui.Modal):
     def __init__(self, ball_id, caught_view):
         super().__init__(title="Attraper la MicroBall !")
@@ -156,36 +176,12 @@ class CatchView(discord.ui.View):
         except Exception as excepction:
             log_error(excepction, "CatchView open_modal", guild=(inter.guild.name,inter.guild_id), ball=self.ball_id)
     
-    async def catch(self, catcher:discord.Member, awnser, ernestien):
+    async def catch(self, catcher:discord.Member, awnser, ernestien:bool):
         self.catcher_name = catcher.display_name
         self.disabled = True
         await self.msg.edit(view=None)
         catcher_id, ball_id = str(catcher.id), str(self.ball_id)
-        if catcher_id in players:
-            player = players[catcher_id]
-            if ball_id in player and player[ball_id] != "":
-                player[ball_id] = str(1+int(player[ball_id]))
-            else:
-                player[ball_id] = "1"
-            if ernestien:
-                player = players_ern[catcher_id]
-                if ball_id in player and player[ball_id] != "":
-                    player[ball_id] = str(1+int(player[ball_id]))
-                else:
-                    player[ball_id] = "1"
-        else:
-            players[catcher_id] = {"player_id":catcher_id}
-            for ball in balls_id:
-                players[catcher_id][ball] = ""
-            players[catcher_id][ball_id] = "1"
-            if ernestien:
-                players_ern[catcher_id] = {"player_id":catcher_id}
-                for ball in balls_id:
-                    players_ern[catcher_id][ball] = ""
-                players_ern[catcher_id][ball_id] = "1"
-        write_csv(r"./players.csv",players,players_keys)
-        write_csv(r"./players_ern.csv",players_ern,players_keys)
-        #lock.release()
+        edit_ball_counts(catcher_id, ball_id, 1, ernestien)
         
     def set_msg(self,msg:discord.Message):
         self.msg = msg
@@ -319,6 +315,29 @@ async def ernestien_collection(inter:discord.Interaction):
         await collec(players_ern, inter, "en ernestien ")
     except Exception as exception:
         log_error(exception, "command /ernestien-collection", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
+
+@bot.tree.command(name="cadeau", description="Offre une MicroBall à quelqu'un")
+@discord.app_commands.choices(ball=[discord.app_commands.Choice(name=balls[ball_id]["nom_fr"], value=ball_id) for ball_id in balls_id])
+@discord.app_commands.describe(ball="MicroBall que vous voulez offrir")
+@discord.app_commands.describe(destinataire="Personne à qui vous voulez offrir cette MicroBall")
+@discord.app_commands.choices(langue=[discord.app_commands.Choice(name="Français", value=False),
+                                      discord.app_commands.Choice(name="Ernestien", value=True)])
+@discord.app_commands.describe(langue="Voulez-vous donner la version ernestienne de la MicroBall")
+async def cadeau(inter:discord.Interaction, ball_id:str, destinataire:discord.User, langue:bool=False):
+    try:
+        await inter.response.defer()
+        sender_id = str(inter.user.id)
+        if (players_ern if langue else players)[sender_id][ball_id] == "":
+            await inter.followup.send("Désolé, tu ne possèdes cette MicroBall", ephemeral=True)
+            await log_channels["main"].send(" 🪵 🎁 ❌ cadeau impossible │ sender: "+inter.user.name+" │ ball_id: "+ball_id+" │ to: "+destinataire.name+(" │ ernestien" if langue else " │ français"))
+        else:
+            dest_id = str(destinataire.id)
+            edit_ball_counts(sender_id, ball_id, -1, langue)
+            edit_ball_counts(dest_id, ball_id, 1, langue)
+            await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.blue(),title="Cadeau !",description="**"+inter.user.nick+"** a offert **"+balls[ball_id]["nom_ens" if langue else "nom_fr"]+"** à <@"+dest_id+">"))
+            await log_channels["main"].send(" 🪵 🎁 cadeau │ sender: "+inter.user.name+" │ ball_id: "+ball_id+" │ to: "+destinataire.name+(" │ ernestien" if langue else " │ français"))
+    except Exception as exception:
+        log_error(exception, "command /cadeau", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
 
 # go !
 with open(r"./token.lock", 'r') as file:
