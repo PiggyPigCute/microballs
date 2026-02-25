@@ -158,7 +158,7 @@ class BoxModal(discord.ui.Modal):
                 await inter.response.send_message("Désolé **"+inter.user.display_name+"**, ce n'est pas le bon nom")
                 #lock.release()
         except Exception as exception:
-            log_error(exception, "BoxModal on_submit", guild=(inter.guild.name,inter.guild_id), ball=self.ball_id, caught=self.caught_view.caught)
+            await log_error(exception, "BoxModal on_submit", guild=(inter.guild.name,inter.guild_id), ball=self.ball_id, caught=self.caught_view.caught)
 
 class CatchView(discord.ui.View):
     def __init__(self, ball_id):
@@ -174,7 +174,7 @@ class CatchView(discord.ui.View):
         try:
             await inter.response.send_modal(BoxModal(self.ball_id,self))
         except Exception as excepction:
-            log_error(excepction, "CatchView open_modal", guild=(inter.guild.name,inter.guild_id), ball=self.ball_id)
+            await log_error(excepction, "CatchView open_modal", guild=(inter.guild.name,inter.guild_id), ball=self.ball_id)
     
     async def catch(self, catcher:discord.Member, awnser, ernestien:bool):
         self.catcher_name = catcher.display_name
@@ -267,7 +267,7 @@ async def set_channel(inter:discord.Interaction):
             await log_channels["main"].send(" 🪵 🤐 set-channel no permission │ guild: "+inter.guild.name+" │ user: "+inter.user.name)
             await inter.followup.send("⚠️ Il vous faut la permission **`manage-channels`** pour exécuter cette commande :)", ephemeral=True)
     except Exception as exception:
-        log_error(exception, "command /set-channel", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
+        await log_error(exception, "command /set-channel", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
 
 @bot.tree.command(name="info", description="Obtenir des informations sur le bot MicroBalls")
 async def info(inter:discord.Interaction):
@@ -280,7 +280,7 @@ async def info(inter:discord.Interaction):
             text = "Pour l'instant dans le serveur *"+inter.guild.name+"*, aucun salon n'a été sélectionné pour faire apparaître les MicroBalls. Utilisez la commande `/set-channel` dans le salon voulu pour les faire apparaître !"
         await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.blue(),title="MicroBalls",description="Salut, je suis le bot **MicroBalls**, créé par **PiggyPig** (`@piggypig`).\n\nLe principe est simple, lorsque le serveur est actif des *MicroBalls* (CountryBalls de micronations) apparaissent. Les membres du serveurs ont alors 5 minutes pour essayer d'attraper la MicroBall en cliquant sur le bouton et en inscrivant le nom de la micronation (en français ou en ernestien).\n\nVous pouvez faire `/collection` pour obtenir votre collection et voir quelle MicroBalls il vous manque. Vous pouvez aussi faire `/give` pour donner une MicroBall à quelqu'un d'autre.\n\n"+text+" (vous devez avoir la permission *manage_channels*)."),ephemeral=True)
     except Exception as exception:
-        log_error(exception, "command /info", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
+        await log_error(exception, "command /info", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
 
 async def collec(dico, inter, precision=""):
     await inter.response.defer()
@@ -307,14 +307,14 @@ async def collection(inter:discord.Interaction):
     try:
         await collec(players, inter)
     except Exception as exception:
-        log_error(exception, "command /collection", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
+        await log_error(exception, "command /collection", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
 
 @bot.tree.command(name="ernestien-collection", description="Regarde la liste des MicroBalls que tu as attrapé en ernestien")
 async def ernestien_collection(inter:discord.Interaction):
     try:
         await collec(players_ern, inter, "en ernestien ")
     except Exception as exception:
-        log_error(exception, "command /ernestien-collection", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
+        await log_error(exception, "command /ernestien-collection", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
 
 @bot.tree.command(name="cadeau", description="Offre une MicroBall à quelqu'un")
 @discord.app_commands.choices(ball_id=[discord.app_commands.Choice(name=ball_id, value=ball_id) for ball_id in balls_id[:20]])
@@ -325,7 +325,7 @@ async def ernestien_collection(inter:discord.Interaction):
 @discord.app_commands.describe(langue="Voulez-vous donner la version ernestienne de la MicroBall")
 async def cadeau(inter:discord.Interaction, ball_id:str, destinataire:discord.User, langue:int=0):
     try:
-        await inter.response.defer()
+        await inter.response.defer(ephemeral=True)
         sender_id = str(inter.user.id)
         if (players_ern if langue else players)[sender_id][ball_id] == "":
             await inter.followup.send("Désolé, tu ne possèdes cette MicroBall", ephemeral=True)
@@ -337,7 +337,7 @@ async def cadeau(inter:discord.Interaction, ball_id:str, destinataire:discord.Us
             await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.blue(),title="Cadeau !",description="**"+inter.user.nick+"** a offert **"+balls[ball_id]["nom_ens" if langue else "nom_fr"]+"** à <@"+dest_id+">"))
             await log_channels["main"].send(" 🪵 🎁 cadeau │ sender: "+inter.user.name+" │ ball_id: "+ball_id+" │ to: "+destinataire.name+(" │ ernestien" if langue else " │ français"))
     except Exception as exception:
-        log_error(exception, "command /cadeau", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
+        await log_error(exception, "command /cadeau", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
 
 # go !
 with open(r"./token.lock", 'r') as file:
