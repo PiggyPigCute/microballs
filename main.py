@@ -332,15 +332,21 @@ async def cadeau(inter:discord.Interaction, ball_id:str, destinataire:discord.Us
     try:
         await inter.response.defer()
         sender_id = str(inter.user.id)
-        if (players_ern if langue else players)[sender_id][ball_id] == "":
-            await inter.followup.send("Désolé, tu ne possèdes cette MicroBall", ephemeral=True)
-            await log_channels["main"].send(" 🪵 🎁 ❌ cadeau impossible │ sender: "+inter.user.name+" │ ball_id: "+ball_id+(" │ ernestien" if langue else " │ français"))
-        else:
+
+        # if all the balls of 𝑠𝑒𝑛𝑑𝑒𝑟 of type 𝑏𝑎𝑙𝑙_𝑖𝑑 are ernestian, then the 𝑠𝑒𝑛𝑑𝑒𝑟 give an ernestian version (peu importe l'argument 𝑙𝑎𝑛𝑔𝑢𝑒 donné)
+        if sender_id in players_ern and players[sender_id][ball_id] == players_ern[sender_id][ball_id]:
+            langue = True
+        
+        dico = (players_ern if langue else players)
+        if sender_id in dico and dico[sender_id][ball_id] != "":
             dest_id = str(destinataire.id)
             edit_ball_counts(sender_id, ball_id, -1, langue)
             edit_ball_counts(dest_id, ball_id, 1, langue)
             await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.blue(),title=":gift: Cadeau !",description="<@"+sender_id+"> a offert **"+(transcription_ernestien(balls[ball_id]["nom_ens"]) if langue else balls[ball_id]["nom_fr"])+"** à <@"+dest_id+">"))
             await log_channels["main"].send(" 🪵 🎁 cadeau │ sender: "+inter.user.name+" │ ball_id: "+ball_id+" │ to: "+destinataire.name+(" │ ernestien" if langue else " │ français"))
+        else:
+            await inter.followup.send("Désolé, tu ne possèdes cette MicroBall", ephemeral=True)
+            await log_channels["main"].send(" 🪵 🎁 ❌ cadeau impossible │ sender: "+inter.user.name+" │ ball_id: "+ball_id+(" │ ernestien" if langue else " │ français"))
     except Exception as exception:
         await log_error(exception, "command /cadeau", guild=(inter.guild.name,inter.guild_id), user=(inter.user.name,inter.user.id))
 
