@@ -168,7 +168,7 @@ class BoxModal(discord.ui.Modal):
         try:
             #lock.acquire()
             if self.caught_view.caught:
-                await inter.response.send_message("Désolé **"+inter.user.display_name+"**, la MicroBall a déjà été attrapée par **"+self.caught_view.catcher_name+"**")
+                await inter.response.send_message("Désolé **"+inter.user.display_name+"**, la MicroBall a déjà été attrapée par **"+str(self.caught_view.catcher_name)+"**")
                 return
             raw_awnser = inter.data["components"][0]["components"][0]["value"]
             awnser = normalize_text(raw_awnser)
