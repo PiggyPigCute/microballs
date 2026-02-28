@@ -6,6 +6,10 @@ import asyncio
 
 from discord.ext import commands
 
+# broadcast
+BROADCAST_ACTIVE = False
+BROADCAST_CONTENT = ""
+
 # constants
 PROBA = 0.04  # probability of sending a ball when a msg is sent
 WAIT_DURATION = 10  # time (in seconds) after a msg is sent, during this time the msg are ignored
@@ -18,7 +22,6 @@ BOT_ADD_LINK = "https://discord.com/oauth2/authorize?client_id=14622418701586309
 
 #global lock 
 #lock = asyncio.Lock()
-
 
 # reading-write csv
 def read_csv(path, sep=";") -> dict:
@@ -233,10 +236,9 @@ async def on_ready():
     await log_channels["main"].send(guilds_list.replace("\n","\n-# "))
     for emoji in bot.get_guild(EMOJI_GUILD_ID).emojis:
         emojis[emoji.name] = "<:"+emoji.name+":"+str(emoji.id)+"> "
-    # for guild_id in spawn_channels:
-    #     await bot.get_guild(int(guild_id)).get_channel(int(spawn_channels[guild_id]["channel_id"])).send(
-    #         "Salut, la commande pour pouvoir s'échanger des MicroBalls arrive, pendant le temps de dev il peut il y a avoir des deconexions du bot"
-    #     )
+    if BROADCAST_ACTIVE:
+        for guild_id in spawn_channels:
+            await bot.get_guild(int(guild_id)).get_channel(int(spawn_channels[guild_id]["channel_id"])).send(BROADCAST_CONTENT)
     print("Let's go !")
 
 @bot.event
