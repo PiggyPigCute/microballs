@@ -7,7 +7,7 @@ import asyncio
 from discord.ext import commands
 
 # broadcast
-BROADCAST_ACTIVE = True
+BROADCAST_ACTIVE = False
 BROADCAST_CONTENT = "Sallut, depuis quelques jours, vous avez pu voir des balles attrapées par **None**, non ce n'est pas Ulysse d'Itaque c'était bien un bug qui, normalement, n'apparaitra plus :grin:"
 
 # constants
