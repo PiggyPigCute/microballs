@@ -76,7 +76,7 @@ log_channels = {}
 mini_digits = "₀₁₂₃₄₅₆₇₈₉"
 diacritics = {"a":"àâä","c":"ç","e":"éèêï","i":"îï","o":"ôö","u":"ûü"}
 letters = "abcdefghijklmnopqrstuvwxyz"
-ernestien = {"a":"n","â":"n̂","b":"Ր","d":"Þ","e":"c","ê":"ĉ","f":"ɸ","g":"ᕋ","h":"ʃ","i":"ı","ê":"î","j":"J","k":"¢","l":"ʟ̥","m":"ᒐ","n":"ᒉ","o":"o","ô":"ô","p":"г̊","r":"Ꞁ̊","s":"c̥","t":"⟊","u":"u","û":"û","v":"v̥","z":"∤"," ":" "}
+ernestien = {"a":"n","â":"n̂","b":"Ր","c":"","d":"Þ","e":"c","ê":"ĉ","f":"ɸ","g":"ᕋ","h":"ʃ","i":"ı","î":"î","j":"J","k":"¢","l":"ʟ̥","m":"ᒐ","n":"ᒉ","o":"o","ô":"ô","p":"г̊","q":"🐠","r":"Ꞁ̊","s":"c̥","t":"⟊","u":"u","û":"û","v":"v̥","z":"∤"," ":"  "}
 
 # time
 current_time = time.time()
@@ -98,6 +98,7 @@ bot = commands.Bot(command_prefix="/", intents=discord.Intents.default(), help_c
 # functions
 def transcription_ernestien(text:str) -> str:
     # use the 𝑒𝑟𝑛𝑒𝑠𝑡𝑖𝑒𝑛 to write with ernestian alphabet from a 𝑡𝑒𝑥𝑡 written with the latin alphabet
+    # warning, if the 𝑡𝑒𝑥𝑡 have other chars than aâbcdeêfghiîjklmnoôpqrstuûvz, an error is returned
     return "".join([ernestien[c] for c in text])
 
 def normalize_text(text:str):
