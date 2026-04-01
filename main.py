@@ -225,6 +225,17 @@ class CatchView(discord.ui.View):
     def set_msg(self,msg:discord.Message):
         self.msg = msg
 
+class BlobView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(label="Attraper !", style=discord.ButtonStyle.primary, custom_id="catch")
+    async def open_modal(self, inter:discord.Interaction, button: discord.ui.Button):
+        try:
+            await inter.response.send_message(":tropical_fish: :tada:", ephemeral=True)
+        except Exception as excepction:
+            await log_error(excepction, "CatchView open_modal", guild=(inter.guild.name,inter.guild_id), ball=self.ball_id)
+
 @bot.event
 async def on_ready():
     await bot.tree.sync()
@@ -239,6 +250,20 @@ async def on_ready():
     if BROADCAST_ACTIVE:
         for guild_id in spawn_channels:
             await bot.get_guild(int(guild_id)).get_channel(int(spawn_channels[guild_id]["channel_id"])).send(BROADCAST_CONTENT)
+    
+    # for guild_id in spawn_channels:
+    #     with open("./event/img/2026-04-01.png", "rb") as file:
+    #         picture = discord.File(file)
+    #     await bot.get_guild(int(guild_id)).get_channel(int(spawn_channels[guild_id]["channel_id"])).send(
+    #         "Une MicroBall vient d'apparaître !", file=picture
+    #     )
+    with open("./event/img/2026-04-01.png", "rb") as file:
+        picture = discord.File(file)
+    view = BlobView()
+    await log_channels["trigger"].send(
+            "Une MicroBall vient d'apparaître !", file=picture, view=view
+    )
+    
     print("Let's go !")
 
 @bot.event
