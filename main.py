@@ -225,6 +225,7 @@ class CatchView(discord.ui.View):
     def set_msg(self,msg:discord.Message):
         self.msg = msg
 
+# special event: 2026-04-01
 class BlobView(discord.ui.View):
     def __init__(self):
         super().__init__(timeout=None)
@@ -251,13 +252,14 @@ async def on_ready():
         for guild_id in spawn_channels:
             await bot.get_guild(int(guild_id)).get_channel(int(spawn_channels[guild_id]["channel_id"])).send(BROADCAST_CONTENT)
     
-    for guild_id in spawn_channels:
-        with open("./event/img/2026-04-01.png", "rb") as file:
-            picture = discord.File(file)
-        view = BlobView()
-        await bot.get_guild(int(guild_id)).get_channel(int(spawn_channels[guild_id]["channel_id"])).send(
-            "Une MicroBall vient d'apparaître !", file=picture, view=view
-        )
+    #  SPECIAL EVENT 2026-04-01
+    # for guild_id in spawn_channels:
+    #     with open("./event/img/2026-04-01.png", "rb") as file:
+    #         picture = discord.File(file)
+    #     view = BlobView()
+    #     await bot.get_guild(int(guild_id)).get_channel(int(spawn_channels[guild_id]["channel_id"])).send(
+    #         "Une MicroBall vient d'apparaître !", file=picture, view=view
+    #     )
     
     print("Let's go !")
 
