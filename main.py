@@ -251,18 +251,13 @@ async def on_ready():
         for guild_id in spawn_channels:
             await bot.get_guild(int(guild_id)).get_channel(int(spawn_channels[guild_id]["channel_id"])).send(BROADCAST_CONTENT)
     
-    # for guild_id in spawn_channels:
-    #     with open("./event/img/2026-04-01.png", "rb") as file:
-    #         picture = discord.File(file)
-    #     await bot.get_guild(int(guild_id)).get_channel(int(spawn_channels[guild_id]["channel_id"])).send(
-    #         "Une MicroBall vient d'apparaître !", file=picture
-    #     )
-    with open("./event/img/2026-04-01.png", "rb") as file:
-        picture = discord.File(file)
-    view = BlobView()
-    await log_channels["trigger"].send(
+    for guild_id in spawn_channels:
+        with open("./event/img/2026-04-01.png", "rb") as file:
+            picture = discord.File(file)
+        view = BlobView()
+        await bot.get_guild(int(guild_id)).get_channel(int(spawn_channels[guild_id]["channel_id"])).send(
             "Une MicroBall vient d'apparaître !", file=picture, view=view
-    )
+        )
     
     print("Let's go !")
 
