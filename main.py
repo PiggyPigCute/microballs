@@ -219,6 +219,7 @@ class CatchView(discord.ui.View):
             await self.msg.edit(view=None)
             catcher_id, ball_id = str(catcher.id), str(self.ball_id)
             edit_ball_counts(catcher_id, ball_id, 1, ernestien)
+            await log_channels["main"].send(" 🪵 🤚"+" 🐠"*ernestien+"  catch │ player: "+catcher.name+" │ awnser: "+awnser)
         except Exception as exception:
             await log_error(exception, "CatchView catch", caught=self.caught, ball=self.ball_id, catcher_name=self.catcher_name)
         
