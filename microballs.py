@@ -64,6 +64,10 @@ class CustomHelpCommand(commands.HelpCommand):
 
 bot = commands.Bot(command_prefix="/", intents=discord.Intents.default(), help_command=CustomHelpCommand())
 
+def save_user(user:discord.User|discord.Member):
+    # store the name and avatar of 𝑢𝑠𝑒𝑟 for the website
+    db.save_user(user.id, user.name, user.global_name, user.avatar.key if user.avatar else None)
+
 class BoxModal(discord.ui.Modal):
     def __init__(self, ball_id, caught_view):
         super().__init__(title="Attraper la MicroBall !")
@@ -131,6 +135,7 @@ class CatchView(discord.ui.View):
             self.disabled = True
             await self.msg.edit(view=None)
             microball_id = db.catch_ball(self.ball_id, catcher.id, language)
+            save_user(catcher)
             await log_channels["main"].send(" 🪵 🤚"+" 🐠"*(language=="ens")+"  catch │ player: "+catcher.name+" │ awnser: "+awnser+" │ ball: "+self.ball_id+" │ microball_id: "+str(microball_id))
         except Exception as exception:
             await log_error(exception, "CatchView catch", caught=self.caught, ball=self.ball_id, catcher_name=self.catcher_name)
@@ -285,6 +290,8 @@ async def cadeau(inter:discord.Interaction, ball_id:str, destinataire:discord.Us
 
         microball_id = db.transfer_ball(ball_id, language, sender_id, destinataire.id)
         if microball_id is not None:
+            save_user(inter.user)
+            save_user(destinataire)
             dest_id = str(destinataire.id)
             await inter.followup.send(embed=discord.embeds.Embed(color=discord.Color.blue(),title=":gift: Cadeau !",description="<@"+str(sender_id)+"> a offert **"+(transcription_ernestien(balls[ball_id]["nom_ens"]) if language == "ens" else balls[ball_id]["nom_fr"])+"** à <@"+dest_id+">"))
             await log_channels["main"].send(" 🪵 🎁 cadeau │ sender: "+inter.user.name+" │ ball_id: "+ball_id+" │ to: "+destinataire.name+" │ "+db.LANGUAGES[language]+" │ microball_id: "+str(microball_id))

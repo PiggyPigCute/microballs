@@ -2,3 +2,5 @@ token.lock
 .vscode/
 microballs.db*
 __pycache__/
+web.lock
+.venv/

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Classement · MicroBalls{% endblock %}
+
+{% macro player_row(row, highlight=false) %}
+  {% set user = users[row.owner_id] %}
+  <tr class="{% if highlight or (me and me.id == row.owner_id) %}is-me{% endif %}">
+    <td class="rank">
+      {% if row.rank == 1 %}🥇{% elif row.rank == 2 %}🥈{% elif row.rank == 3 %}🥉{% else %}{{ row.rank }}{% endif %}
+    </td>
+    <td>
+      <div class="player">
+        <img class="avatar" src="{{ user.avatar_url }}" alt="" loading="lazy">
+        <div>
+          <div class="player-name">{{ user.name }}</div>
+          {% if user.username and user.username != user.name %}<div class="muted small">@{{ user.username }}</div>{% endif %}
+        </div>
+      </div>
+    </td>
+    <td class="num strong">{{ "{:,}".format(row.total).replace(",", " ") }}</td>
+    <td class="hide-sm">
+      <div class="progress-cell">
+        <div class="progress"><div class="progress-bar" style="width: {{ (100 * row.types / n_balls) | round(1) }}%"></div></div>
+        <span class="small muted">{{ row.types }}/{{ n_balls }}</span>
+      </div>
+    </td>
+    <td class="num hide-sm">{% if row.ernestien %}<span class="badge badge-ens">{{ row.ernestien }}</span>{% else %}<span class="muted">–</span>{% endif %}</td>
+  </tr>
+{% endmacro %}
+
+{% block content %}
+  <section class="hero">
+    <h1>Classement</h1>
+    <p class="muted">{{ n_players }} joueurs · {{ "{:,}".format(n_total).replace(",", " ") }} MicroBalls attrapées</p>
+  </section>
+
+  <div class="card table-card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th class="rank">#</th>
+          <th>Joueur</th>
+          <th class="num">MicroBalls</th>
+          <th class="hide-sm">Types découverts</th>
+          <th class="num hide-sm">En ernestien</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in ranking %}{{ player_row(row) }}{% endfor %}
+        {% if my_row %}
+          <tr class="separator"><td colspan="5">⋯</td></tr>
+          {{ player_row(my_row, true) }}
+        {% endif %}
+      </tbody>
+    </table>
+    {% if not ranking %}<p class="empty">Personne n'a encore attrapé de MicroBall.</p>{% endif %}
+  </div>
+{% endblock %}

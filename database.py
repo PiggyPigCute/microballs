@@ -1,7 +1,8 @@
+import os
 import sqlite3
 from datetime import datetime, timezone
 
-DB_PATH = r"./microballs.db"
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "microballs.db")
 
 # languages in which a MicroBall can be caught
 # → key: code stored in the database (also the suffix of the columns in balls.csv: regex_fr, nom_ens...)
@@ -30,10 +31,30 @@ CREATE TABLE IF NOT EXISTS spawn_channels (
     channel_id INTEGER NOT NULL,
     special    TEXT
 );
+
+-- discord profiles, used by the website to display names and avatars
+CREATE TABLE IF NOT EXISTS users (
+    id          INTEGER PRIMARY KEY,
+    username    TEXT NOT NULL,
+    global_name TEXT,                                     -- display name (NULL if the same as username)
+    avatar      TEXT,                                     -- avatar hash (NULL for the default avatar)
+    updated_at  TEXT NOT NULL                             -- ISO 8601 UTC date
+);
 """
 
-con = sqlite3.connect(DB_PATH)
-con.execute("PRAGMA foreign_keys = ON")
+def now() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+def connect() -> sqlite3.Connection:
+    # open a new connection (the bot uses 𝑐𝑜𝑛, the website opens one per request)
+    # WAL mode allows the website to read while the bot writes
+    connection = sqlite3.connect(DB_PATH)
+    connection.execute("PRAGMA foreign_keys = ON")
+    connection.execute("PRAGMA journal_mode = WAL")
+    connection.execute("PRAGMA busy_timeout = 5000")
+    return connection
+
+con = connect()
 
 def init_db():
     # create the tables if they don't exist and register the 𝐿𝐴𝑁𝐺𝑈𝐴𝐺𝐸𝑆
@@ -46,7 +67,7 @@ def add_ball(ball_type:str, owner_id:int, language:str, catcher_id:int|None=None
     # insert a new MicroBall and return its id
     # → 𝑐𝑎𝑢𝑔ℎ𝑡_𝑎𝑡: if None and 𝑐𝑎𝑡𝑐ℎ𝑒𝑟_𝑖𝑑 is given, the current date is used
     if caught_at is None and catcher_id is not None:
-        caught_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        caught_at = now()
     with con:
         cursor = con.execute(
             "INSERT INTO microballs (ball_type, owner_id, catcher_id, caught_at, language) VALUES (?, ?, ?, ?, ?)",
@@ -95,3 +116,13 @@ def set_spawn_channel(guild_id:int, channel_id:int):
         con.execute(
             "INSERT INTO spawn_channels (guild_id, channel_id) VALUES (?, ?) ON CONFLICT(guild_id) DO UPDATE SET channel_id = excluded.channel_id",
             (guild_id, channel_id))
+
+# users
+def save_user(user_id:int, username:str, global_name:str|None, avatar:str|None, connection:sqlite3.Connection|None=None):
+    # insert or update the discord profile of a user
+    connection = connection or con
+    with connection:
+        connection.execute(
+            "INSERT INTO users (id, username, global_name, avatar, updated_at) VALUES (?, ?, ?, ?, ?) "
+            "ON CONFLICT(id) DO UPDATE SET username = excluded.username, global_name = excluded.global_name, avatar = excluded.avatar, updated_at = excluded.updated_at",
+            (user_id, username, global_name, avatar, now()))

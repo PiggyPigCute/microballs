@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}MicroBalls{% endblock %}</title>
+  <link rel="icon" href="{{ url_for('ball_image', filename='000.png') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="{{ url_for('leaderboard') }}">
+        <img src="{{ url_for('ball_image', filename='000.png') }}" alt="">
+        <span>MicroBalls</span>
+      </a>
+      <nav class="nav">
+        <a href="{{ url_for('leaderboard') }}" {% if request.endpoint == 'leaderboard' %}aria-current="page"{% endif %}>Classement</a>
+        <a href="{{ url_for('collection') }}" {% if request.endpoint == 'collection' %}aria-current="page"{% endif %}>Ma collection</a>
+      </nav>
+      <div class="account">
+        {% if me %}
+          <img class="avatar" src="{{ me.avatar_url }}" alt="">
+          <span class="account-name">{{ me.name }}</span>
+          <form method="post" action="{{ url_for('logout') }}">
+            <button class="btn btn-ghost" type="submit">Déconnexion</button>
+          </form>
+        {% else %}
+          <a class="btn btn-discord" href="{{ url_for('login') }}">Se connecter avec Discord</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    Bot MicroBalls créé par <strong>PiggyPig</strong>
+  </footer>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

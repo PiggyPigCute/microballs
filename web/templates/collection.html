@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block title %}Ma collection · MicroBalls{% endblock %}
+
+{% block content %}
+  <section class="hero hero-profile">
+    <img class="avatar avatar-lg" src="{{ me.avatar_url }}" alt="">
+    <div>
+      <h1>{{ me.name }}</h1>
+      {% if me.username and me.username != me.name %}<p class="muted">@{{ me.username }}</p>{% endif %}
+    </div>
+  </section>
+
+  <section class="stats">
+    <div class="card stat">
+      <div class="stat-value">{{ "{:,}".format(n_microballs).replace(",", " ") }}</div>
+      <div class="stat-label">MicroBalls</div>
+    </div>
+    <div class="card stat">
+      <div class="stat-value">{{ counts | length }}<span class="muted">/{{ n_balls }}</span></div>
+      <div class="stat-label">Types découverts</div>
+      <div class="progress"><div class="progress-bar" style="width: {{ (100 * (counts | length) / n_balls) | round(1) }}%"></div></div>
+    </div>
+    <div class="card stat">
+      <div class="stat-value stat-ens">{{ n_ernestien }}</div>
+      <div class="stat-label">En ernestien</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Types</h2>
+    <p class="muted small">Clique sur un type pour filtrer le détail.</p>
+    <div class="ball-grid">
+      {% for ball_id, ball in balls.items() %}
+        <button type="button" class="ball-tile {% if ball_id not in counts %}is-missing{% endif %}"
+                data-type="{{ ball_id }}" {% if ball_id not in counts %}disabled{% endif %}
+                title="{{ ball.nom_fr }}">
+          <img src="{{ url_for('ball_image', filename=ball.img ~ '.png') }}" alt="" loading="lazy">
+          {% if ball_id in counts %}<span class="ball-count">×{{ counts[ball_id] }}</span>{% endif %}
+          <span class="ball-name">{{ ball.nom_fr if ball_id in counts else "???" }}</span>
+        </button>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Détail</h2>
+      <div class="filters">
+        <select id="filter-type" aria-label="Filtrer par type">
+          <option value="">Tous les types</option>
+          {% for ball_id, ball in balls.items() if ball_id in counts %}
+            <option value="{{ ball_id }}">{{ ball.nom_fr }}</option>
+          {% endfor %}
+        </select>
+        <select id="filter-language" aria-label="Filtrer par langue">
+          <option value="">Toutes les langues</option>
+          <option value="fr">Français</option>
+          <option value="ens">Ernestien</option>
+        </select>
+        <select id="filter-age" aria-label="Filtrer par ancienneté">
+          <option value="">Toutes</option>
+          <option value="new">Récentes</option>
+          <option value="old">Anciennes</option>
+        </select>
+      </div>
+    </div>
+
+    {% if microballs %}
+      <div class="card table-card">
+        <table class="table" id="detail">
+          <thead>
+            <tr>
+              <th>MicroBall</th>
+              <th>Langue</th>
+              <th class="hide-sm">Attrapée par</th>
+              <th>Date</th>
+              <th class="num hide-sm">N°</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for mb in microballs %}
+              <tr data-type="{{ mb.type }}" data-language="{{ mb.language }}" data-age="{{ 'new' if mb.caught_at else 'old' }}">
+                <td>
+                  <div class="player">
+                    {% if mb.ball.img %}<img class="ball-icon" src="{{ url_for('ball_image', filename=mb.ball.img ~ '.png') }}" alt="" loading="lazy">{% endif %}
+                    <div>
+                      <div class="player-name {% if mb.language == 'ens' %}ens-text{% endif %}">{{ mb.name }}{% if mb.amount > 1 %} <span class="amount">×{{ mb.amount }}</span>{% endif %}</div>
+                      {% if mb.language == 'ens' %}<div class="muted small">{{ mb.ball.nom_fr }}</div>{% endif %}
+                    </div>
+                  </div>
+                </td>
+                <td><span class="badge {% if mb.language == 'ens' %}badge-ens{% endif %}">{{ mb.language_name }}</span></td>
+                <td class="hide-sm">
+                  {% if mb.catcher %}
+                    <div class="player">
+                      <img class="avatar avatar-sm" src="{{ mb.catcher.avatar_url }}" alt="" loading="lazy">
+                      <span>{{ "Toi" if mb.catcher_is_me else mb.catcher.name }}</span>
+                    </div>
+                  {% else %}
+                    <span class="muted">–</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if mb.caught_at %}{{ mb.caught_at | date_fr }}{% else %}<span class="badge badge-old">Ancienne</span>{% endif %}
+                </td>
+                <td class="num muted hide-sm">{{ mb.id if mb.caught_at else "" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <p class="empty" id="no-result" hidden>Aucune MicroBall ne correspond à ces filtres.</p>
+      </div>
+      <p class="muted small">Les MicroBalls « anciennes » ont été attrapées avant le passage à la nouvelle base de données : on ne sait pas qui les a attrapées ni quand, elles sont donc regroupées par type et par langue.</p>
+    {% else %}
+      <div class="card"><p class="empty">Tu n'as encore attrapé aucune MicroBall. Elles apparaissent quand les serveurs où se trouve le bot sont actifs !</p></div>
+    {% endif %}
+  </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const filters = {type: document.getElementById("filter-type"), language: document.getElementById("filter-language"), age: document.getElementById("filter-age")};
+  const rows = document.querySelectorAll("#detail tbody tr");
+  const noResult = document.getElementById("no-result");
+
+  function applyFilters() {
+    let visible = 0;
+    rows.forEach(row => {
+      const shown = Object.entries(filters).every(([key, select]) => !select.value || row.dataset[key] === select.value);
+      row.hidden = !shown;
+      if (shown) visible++;
+    });
+    if (noResult) noResult.hidden = visible > 0;
+  }
+
+  Object.values(filters).forEach(select => select && select.addEventListener("change", applyFilters));
+  document.querySelectorAll(".ball-tile:not(.is-missing)").forEach(tile => tile.addEventListener("click", () => {
+    filters.type.value = filters.type.value === tile.dataset.type ? "" : tile.dataset.type;
+    applyFilters();
+    document.getElementById("detail").scrollIntoView({behavior: "smooth", block: "start"});
+  }));
+</script>
+{% endblock %}
