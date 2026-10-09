@@ -1,6 +1,5 @@
 token.lock
-players.csv
-channels.csv
-players_ern.csv
 .vscode/
 event/infos/
+microballs.db*
+__pycache__/
