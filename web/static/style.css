@@ -165,6 +165,14 @@ a { color: var(--primary); }
 .ball-icon { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
 
 .progress-cell { display: flex; align-items: center; gap: 10px; }
+.complete-sets {
+  font-family: "Fredoka", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--primary);
+  min-width: 2.6em;
+}
 .progress { height: 8px; border-radius: 999px; background: var(--surface-2); overflow: hidden; flex: 1; min-width: 80px; }
 .progress-bar { height: 100%; background: var(--primary); border-radius: inherit; }
 

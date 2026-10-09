@@ -162,10 +162,12 @@ def inject_globals():
 # pages
 @app.route("/")
 def leaderboard():
+    # 𝑚𝑖𝑛_𝑎𝑚𝑜𝑢𝑛𝑡: amount of the rarest type of the player, i.e. number of complete collections if all the types are found
     rows = get_db().execute(
-        "SELECT owner_id, COUNT(*) AS total, COUNT(DISTINCT ball_type) AS types, SUM(language = 'ens') AS ernestien "
-        "FROM microballs GROUP BY owner_id ORDER BY total DESC, types DESC").fetchall()
-    ranking = [dict(row, rank=i+1) for i, row in enumerate(rows)]
+        "SELECT owner_id, SUM(amount) AS total, COUNT(*) AS types, SUM(ernestien) AS ernestien, MIN(amount) AS min_amount "
+        "FROM (SELECT owner_id, ball_type, COUNT(*) AS amount, SUM(language = 'ens') AS ernestien FROM microballs GROUP BY owner_id, ball_type) "
+        "GROUP BY owner_id ORDER BY total DESC, types DESC").fetchall()
+    ranking = [dict(row, rank=i+1, complete_sets=row["min_amount"] if row["types"] >= len(balls) else 0) for i, row in enumerate(rows)]
     shown = ranking[:LEADERBOARD_SIZE]
     my_row = None
     if "user_id" in session:

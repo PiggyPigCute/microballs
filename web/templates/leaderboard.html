@@ -21,6 +21,7 @@
       <div class="progress-cell">
         <div class="progress"><div class="progress-bar" style="width: {{ (100 * row.types / n_balls) | round(1) }}%"></div></div>
         <span class="small muted">{{ row.types }}/{{ n_balls }}</span>
+        <span class="complete-sets" {% if row.complete_sets > 1 %}title="{{ row.complete_sets }} collections complètes">×{{ row.complete_sets }}{% else %}>{% endif %}</span>
       </div>
     </td>
     <td class="num hide-sm">{% if row.ernestien %}<span class="badge badge-ens">{{ row.ernestien }}</span>{% else %}<span class="muted">–</span>{% endif %}</td>
