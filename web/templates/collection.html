@@ -74,26 +74,17 @@
         <table class="table" id="detail">
           <thead>
             <tr>
-              {% if is_mine %}<th class="select-col" title="Sélectionner pour donner">🎁</th>{% endif %}
               <th>MicroBall</th>
               <th>Langue</th>
               <th class="hide-sm">Attrapée par</th>
               <th>Date</th>
               <th class="num hide-sm">N°</th>
+              {% if is_mine %}<th class="select-col" title="Sélectionner pour donner">🎁</th>{% endif %}
             </tr>
           </thead>
           <tbody>
             {% for mb in microballs %}
               <tr data-type="{{ mb.type }}" data-language="{{ mb.language }}" data-age="{{ 'new' if mb.caught_at else 'old' }}">
-                {% if is_mine %}
-                  <td class="select-col">
-                    {% if mb.amount > 1 or not mb.caught_at %}
-                      <input class="gift-amount" type="number" name="old:{{ mb.type }}:{{ mb.language }}" min="0" max="{{ mb.amount }}" value="0" inputmode="numeric" aria-label="Nombre à donner">
-                    {% else %}
-                      <input class="gift-check" type="checkbox" name="mb" value="{{ mb.id }}" aria-label="Donner cette MicroBall">
-                    {% endif %}
-                  </td>
-                {% endif %}
                 <td>
                   <div class="player">
                     {% if mb.ball.img %}<img class="ball-icon" src="{{ url_for('ball_image', filename=mb.ball.img ~ '.png') }}" alt="" loading="lazy">{% endif %}
@@ -121,6 +112,15 @@
                   {% if mb.caught_at %}{{ mb.caught_at | date_fr }}{% else %}<span class="badge badge-old">Ancienne</span>{% endif %}
                 </td>
                 <td class="num muted hide-sm">{{ mb.id if mb.caught_at else "" }}</td>
+                {% if is_mine %}
+                  <td class="select-col">
+                    {% if mb.amount > 1 or not mb.caught_at %}
+                      <input class="gift-amount" type="number" name="old:{{ mb.type }}:{{ mb.language }}" min="0" max="{{ mb.amount }}" value="0" inputmode="numeric" aria-label="Nombre à donner">
+                    {% else %}
+                      <input class="gift-check" type="checkbox" name="mb" value="{{ mb.id }}" aria-label="Donner cette MicroBall">
+                    {% endif %}
+                  </td>
+                {% endif %}
               </tr>
             {% endfor %}
           </tbody>
