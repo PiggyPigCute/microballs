@@ -10,16 +10,25 @@ from discord.ext import commands
 
 # broadcast
 BROADCAST_ACTIVE = False
-BROADCAST_CONTENT = "Sallut, depuis quelques jours, vous avez pu voir des balles attrapées par **None**, non ce n'est pas Ulysse d'Itaque c'était bien un bug qui, normalement, n'apparaitra plus :grin:"
+BROADCAST_CONTENT = "Salut, depuis quelques jours, vous avez pu voir des balles attrapées par **None**, non ce n'est pas Ulysse d'Itaque c'était bien un bug qui, normalement, n'apparaitra plus :grin:"
+
+# debugging constants
+PROBA = 1
+WAIT_DURATION = 1
+EMOJI_GUILD_ID = 1462239696418635840
+LOGS_GUILD_ID = 787077303242326056
+LOGS_MAIN_CHANNEL_ID = 1558034484539035748
+LOGS_TRIGGER_CHANNEL_ID = 1558034484539035748
+ERROR_PING_ROLE_ID = 800023886402027540
 
 # constants
-PROBA = 0.04  # probability of sending a ball when a msg is sent
-WAIT_DURATION = 10  # time (in seconds) after a msg is sent, during this time the msg are ignored
-EMOJI_GUILD_ID = 1462239696418635840  # id of the guild where the the emojis are stored (here, the MicroBall guild)
-LOGS_GUILD_ID = 1462239696418635840  # id of the guild where the logs are sent
-LOGS_MAIN_CHANNEL_ID = 1463155147625467978  # id of the channel where the logs (other than "trigger") are sent
-LOGS_TRIGGER_CHANNEL_ID = 1475267245461733467 # od of the channel where the "trigger" logs are sent
-ERROR_PING_ROLE_ID = 1467532432872833156
+# PROBA = 0.04  # probability of sending a ball when a msg is sent
+# WAIT_DURATION = 10  # time (in seconds) after a msg is sent, during this time the msg are ignored
+# EMOJI_GUILD_ID = 1462239696418635840  # id of the guild where the the emojis are stored (here, the MicroBall guild)
+# LOGS_GUILD_ID = 1462239696418635840  # id of the guild where the logs are sent
+# LOGS_MAIN_CHANNEL_ID = 1463155147625467978  # id of the channel where the logs (other than "trigger") are sent
+# LOGS_TRIGGER_CHANNEL_ID = 1475267245461733467 # od of the channel where the "trigger" logs are sent
+# ERROR_PING_ROLE_ID = 1467532432872833156
 BOT_ADD_LINK = "https://discord.com/oauth2/authorize?client_id=1462241870158630913&permissions=3072&integration_type=0&scope=bot"
 
 #global lock
