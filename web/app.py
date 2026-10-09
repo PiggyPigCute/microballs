@@ -1,6 +1,6 @@
 # website of MicroBalls: discord login, personal collection and leaderboard
-# run locally:       flask --app web.app run          (from the microballs folder)
-# run in production: gunicorn -w 2 -b 127.0.0.1:8000 web.app:app
+# run locally:       flask --app web.app run --port 3008         (from the microballs folder)
+# run in production: gunicorn -w 2 -b 127.0.0.1:3008 web.app:app
 
 import os
 import sys

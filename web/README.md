@@ -21,7 +21,7 @@ Créer `microballs/web.lock` (ignoré par git) :
 
 - `secret_key` signe les cookies de session : `python -c "import secrets; print(secrets.token_hex(32))"`.
 - Le token du bot est lu dans `token.lock` ; il sert à récupérer les pseudos et avatars des joueurs pour le classement. On peut aussi le mettre dans `web.lock` (`"bot_token"`).
-- Pour tester en local : ajouter `"redirect_uri": "http://localhost:5000/callback"` (et cette redirection sur le portail Discord).
+- Pour tester en local : ajouter `"redirect_uri": "http://localhost:3008/callback"` (et cette redirection sur le portail Discord).
 
 ## 3. Installation
 
@@ -35,15 +35,15 @@ python -m venv .venv
 
 ```sh
 cd microballs
-.venv/bin/gunicorn -w 2 -b 127.0.0.1:8000 web.app:app
+.venv/bin/gunicorn -w 2 -b 127.0.0.1:3008 web.app:app
 ```
 
-En local : `.venv/bin/flask --app web.app run`.
+En local : `.venv/bin/flask --app web.app run --port 3008`.
 
 Derrière un reverse proxy HTTPS (nginx, Caddy…) qui transmet `X-Forwarded-Proto` et `X-Forwarded-Host`. Exemple Caddy :
 
 ```
 microballs.chruk.fr {
-    reverse_proxy 127.0.0.1:8000
+    reverse_proxy 127.0.0.1:3008
 }
 ```
