@@ -128,7 +128,7 @@ def get_users(user_ids) -> dict[int,dict]:
     for user_id in user_ids:
         row = rows.get(user_id)
         users[user_id] = {
-            "name": (row["global_name"] or row["username"]) if row else f"Joueur #{str(user_id)[-4:]}",
+            "name": (row["global_name"] or row["username"]) if row else f"Joueur·euse #{str(user_id)[-4:]}",
             "username": row["username"] if row else None,
             "avatar_url": avatar_url(user_id, row["avatar"] if row else None),
         }
@@ -184,7 +184,7 @@ def collection():
         return redirect(url_for("login"))
     return redirect(url_for("player", user_id=session["user_id"]))
 
-@app.route("/joueur/<int:user_id>")
+@app.route("/joueur-euse/<int:user_id>")
 def player(user_id:int):
     viewer_id = int(session["user_id"]) if "user_id" in session else None
     rows = get_db().execute(
