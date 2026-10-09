@@ -11,7 +11,7 @@
       <div class="player">
         <img class="avatar" src="{{ user.avatar_url }}" alt="" loading="lazy">
         <div>
-          <div class="player-name">{{ user.name }}</div>
+          <a class="player-name player-link" href="{{ url_for('player', user_id=row.owner_id) }}">{{ user.name }}</a>
           {% if user.username and user.username != user.name %}<div class="muted small">@{{ user.username }}</div>{% endif %}
         </div>
       </div>

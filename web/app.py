@@ -182,14 +182,23 @@ def leaderboard():
 def collection():
     if "user_id" not in session:
         return redirect(url_for("login"))
-    user_id = int(session["user_id"])
+    return redirect(url_for("player", user_id=session["user_id"]))
+
+@app.route("/joueur/<int:user_id>")
+def player(user_id:int):
+    viewer_id = int(session["user_id"]) if "user_id" in session else None
     rows = get_db().execute(
         "SELECT id, ball_type, catcher_id, caught_at, language FROM microballs WHERE owner_id = ? ORDER BY id DESC",
         (user_id,)).fetchall()
+    if not rows and user_id != viewer_id:
+        abort(404)  # unknown player (avoid asking discord for random ids)
     counts = {}
     for row in rows:
         counts[row["ball_type"]] = counts.get(row["ball_type"], 0)+1
-    users = get_users([row["catcher_id"] for row in rows])
+    # types sorted from the most to the least owned, the missing ones at the end (sorted() keeps the balls.csv order for ties)
+    sorted_balls = sorted(balls.items(), key=lambda item: -counts.get(item[0], 0))
+    complete_sets = min(counts.get(ball_id, 0) for ball_id in balls)
+    users = get_users([row["catcher_id"] for row in rows] + [user_id])
     microballs = []
     old_groups = {}  # the old MicroBalls (no catcher, no date) are grouped by type and language
     for row in rows:
@@ -203,14 +212,15 @@ def collection():
             "id": row["id"], "amount": 1, "type": row["ball_type"], "ball": ball, "language": row["language"],
             "language_name": db.LANGUAGES.get(row["language"], row["language"]),
             "name": ball["nom_ens_transcrit"] if row["language"] == "ens" and ball["nom_ens_transcrit"] else ball["nom_fr"],
-            "catcher": users.get(row["catcher_id"]), "catcher_is_me": row["catcher_id"] == user_id,
+            "catcher": users.get(row["catcher_id"]), "catcher_is_me": row["catcher_id"] == viewer_id,
             "caught_at": datetime.fromisoformat(row["caught_at"]) if row["caught_at"] else None,
         }
         if row["caught_at"] is None and row["catcher_id"] is None:
             old_groups[(row["ball_type"], row["language"])] = microball
         microballs.append(microball)
-    return render_template("collection.html", balls=balls, counts=counts, microballs=microballs, n_microballs=len(rows),
-                           n_ernestien=sum(row["language"] == "ens" for row in rows))
+    return render_template("collection.html", balls=balls, sorted_balls=sorted_balls, counts=counts, microballs=microballs,
+                           n_microballs=len(rows), n_ernestien=sum(row["language"] == "ens" for row in rows),
+                           complete_sets=complete_sets, player={"id": user_id, **users[user_id]}, is_mine=user_id == viewer_id)
 
 @app.route("/img/<path:filename>")
 def ball_image(filename):

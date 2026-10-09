@@ -19,7 +19,7 @@
       </a>
       <nav class="nav">
         <a href="{{ url_for('leaderboard') }}" {% if request.endpoint == 'leaderboard' %}aria-current="page"{% endif %}>Classement</a>
-        <a href="{{ url_for('collection') }}" {% if request.endpoint == 'collection' %}aria-current="page"{% endif %}>Ma collection</a>
+        <a href="{{ url_for('collection') }}" {% if request.endpoint == 'player' and me and request.view_args.user_id == me.id %}aria-current="page"{% endif %}>Ma collection</a>
       </nav>
       <div class="account">
         {% if me %}

@@ -1,12 +1,12 @@
 {% extends "base.html" %}
-{% block title %}Ma collection · MicroBalls{% endblock %}
+{% block title %}{{ "Ma collection" if is_mine else "Collection de " ~ player.name }} · MicroBalls{% endblock %}
 
 {% block content %}
   <section class="hero hero-profile">
-    <img class="avatar avatar-lg" src="{{ me.avatar_url }}" alt="">
+    <img class="avatar avatar-lg" src="{{ player.avatar_url }}" alt="">
     <div>
-      <h1>{{ me.name }}</h1>
-      {% if me.username and me.username != me.name %}<p class="muted">@{{ me.username }}</p>{% endif %}
+      <h1>{{ player.name }}</h1>
+      {% if player.username and player.username != player.name %}<p class="muted">@{{ player.username }}</p>{% endif %}
     </div>
   </section>
 
@@ -16,7 +16,7 @@
       <div class="stat-label">MicroBalls</div>
     </div>
     <div class="card stat">
-      <div class="stat-value">{{ counts | length }}<span class="muted">/{{ n_balls }}</span></div>
+      <div class="stat-value">{{ counts | length }}<span class="muted">/{{ n_balls }}</span>{% if complete_sets > 1 %} <span class="complete-sets" title="{{ complete_sets }} collections complètes">×{{ complete_sets }}</span>{% endif %}</div>
       <div class="stat-label">Types découverts</div>
       <div class="progress"><div class="progress-bar" style="width: {{ (100 * (counts | length) / n_balls) | round(1) }}%"></div></div>
     </div>
@@ -30,7 +30,7 @@
     <h2>Types</h2>
     <p class="muted small">Clique sur un type pour filtrer le détail.</p>
     <div class="ball-grid">
-      {% for ball_id, ball in balls.items() %}
+      {% for ball_id, ball in sorted_balls %}
         <button type="button" class="ball-tile {% if ball_id not in counts %}is-missing{% endif %}"
                 data-type="{{ ball_id }}" {% if ball_id not in counts %}disabled{% endif %}
                 title="{{ ball.nom_fr }}">
@@ -112,7 +112,7 @@
       </div>
       <p class="muted small">Les MicroBalls « anciennes » ont été attrapées avant le passage à la nouvelle base de données : on ne sait pas qui les a attrapées ni quand, elles sont donc regroupées par type et par langue.</p>
     {% else %}
-      <div class="card"><p class="empty">Tu n'as encore attrapé aucune MicroBall. Elles apparaissent quand les serveurs où se trouve le bot sont actifs !</p></div>
+      <div class="card"><p class="empty">{% if is_mine %}Tu n'as encore attrapé aucune MicroBall. Elles apparaissent quand les serveurs où se trouve le bot sont actifs !{% else %}{{ player.name }} n'a aucune MicroBall.{% endif %}</p></div>
     {% endif %}
   </section>
 {% endblock %}
