@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Par type · MicroBalls{% endblock %}
+{% block head %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block content %}
+  <section class="hero">
+    <h1>MicroBalls par type</h1>
+    <p class="muted">{{ "{:,}".format(n_total).replace(",", " ") }} MicroBalls attrapées · clique sur un type pour voir qui en a le plus</p>
+  </section>
+
+  <div class="card table-card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Type</th>
+          <th class="num">Attrapées</th>
+          <th class="hide-sm"></th>
+          <th class="num hide-sm">En ernestien</th>
+          <th class="num hide-sm">Joueur·euse·s</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in types %}
+          <tr>
+            <td>
+              <div class="player">
+                <img class="ball-icon" src="{{ url_for('ball_image', filename=t.ball.img ~ '.png') }}" alt="" loading="lazy">
+                <a class="player-name player-link" href="{{ url_for('by_type_detail', ball_id=t.id) }}">{{ t.ball.nom_fr }}</a>
+              </div>
+            </td>
+            <td class="num strong">{{ "{:,}".format(t.total).replace(",", " ") }}</td>
+            <td class="hide-sm">
+              <div class="progress"><div class="progress-bar" style="width: {{ (100 * t.total / max_total) | round(1) }}%"></div></div>
+            </td>
+            <td class="num hide-sm">{% if t.ernestien %}<span class="badge badge-ens">{{ t.ernestien }}</span>{% else %}<span class="muted">–</span>{% endif %}</td>
+            <td class="num hide-sm">{{ t.owners }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

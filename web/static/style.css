@@ -315,3 +315,9 @@ a { color: var(--primary); }
   background: var(--surface);
   color: var(--text);
 }
+
+/* by type pages */
+.back { margin: 24px 0 0; }
+.back a { text-decoration: none; font-weight: 600; }
+.back + .hero { padding-top: 12px; }
+.ball-icon-lg { width: 80px; height: 80px; object-fit: contain; }

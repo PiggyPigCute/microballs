@@ -326,6 +326,30 @@ def give():
                 +" │ microball_ids: "+(",".join(map(str, given)) if n <= 100 else f"{n} balles"))
     return back
 
+# "secret" pages (not linked anywhere, not indexed): statistics by type
+@app.route("/bytype")
+def by_type():
+    stats = {row["ball_type"]: row for row in get_db().execute(
+        "SELECT ball_type, COUNT(*) AS total, SUM(language = 'ens') AS ernestien, COUNT(DISTINCT owner_id) AS owners "
+        "FROM microballs GROUP BY ball_type")}
+    types = [{"id": ball_id, "ball": ball, "total": stats[ball_id]["total"] if ball_id in stats else 0,
+              "ernestien": stats[ball_id]["ernestien"] if ball_id in stats else 0,
+              "owners": stats[ball_id]["owners"] if ball_id in stats else 0} for ball_id, ball in balls.items()]
+    return render_template("bytype.html", types=types, max_total=max([t["total"] for t in types] + [1]),
+                           n_total=sum(t["total"] for t in types))
+
+@app.route("/bytype/<ball_id>")
+def by_type_detail(ball_id:str):
+    if ball_id not in balls:
+        abort(404)
+    rows = get_db().execute(
+        "SELECT owner_id, COUNT(*) AS total, SUM(language = 'ens') AS ernestien FROM microballs WHERE ball_type = ? "
+        "GROUP BY owner_id ORDER BY total DESC, ernestien DESC", (ball_id,)).fetchall()
+    ranking = [dict(row, rank=i+1) for i, row in enumerate(rows)]
+    users = get_users([row["owner_id"] for row in ranking])
+    return render_template("bytype_detail.html", ball_id=ball_id, ball=balls[ball_id], ranking=ranking, users=users,
+                           n_total=sum(row["total"] for row in ranking))
+
 @app.route("/img/<path:filename>")
 def ball_image(filename):
     return send_from_directory(os.path.join(BASE_DIR, "img"), filename, max_age=86400)

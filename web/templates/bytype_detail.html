@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{{ ball.nom_fr }} · MicroBalls{% endblock %}
+{% block head %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block content %}
+  <p class="back"><a href="{{ url_for('by_type') }}">← Tous les types</a></p>
+  <section class="hero hero-profile">
+    <img class="ball-icon-lg" src="{{ url_for('ball_image', filename=ball.img ~ '.png') }}" alt="">
+    <div>
+      <h1>{{ ball.nom_fr }}</h1>
+      <p class="muted">
+        {% if ball.nom_ens_transcrit %}<span class="ens-text">{{ ball.nom_ens_transcrit }}</span> · {% endif %}
+        {{ "{:,}".format(n_total).replace(",", " ") }} attrapée{{ "s" if n_total > 1 }} · {{ ranking | length }} joueur·euse{{ "·s" if ranking | length > 1 }}
+      </p>
+    </div>
+  </section>
+
+  <div class="card table-card">
+    <table class="table">
+      <thead>
+        <tr>
+          <th class="rank">#</th>
+          <th>Joueur·euse</th>
+          <th class="num">Exemplaires</th>
+          <th class="num">En ernestien</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in ranking %}
+          {% set user = users[row.owner_id] %}
+          <tr class="{% if me and me.id == row.owner_id %}is-me{% endif %}">
+            <td class="rank">{% if row.rank == 1 %}🥇{% elif row.rank == 2 %}🥈{% elif row.rank == 3 %}🥉{% else %}{{ row.rank }}{% endif %}</td>
+            <td>
+              <div class="player">
+                <img class="avatar" src="{{ user.avatar_url }}" alt="" loading="lazy">
+                <div>
+                  <a class="player-name player-link" href="{{ url_for('player', user_id=row.owner_id) }}">{{ user.name }}</a>
+                  {% if user.username and user.username != user.name %}<div class="muted small">@{{ user.username }}</div>{% endif %}
+                </div>
+              </div>
+            </td>
+            <td class="num strong">{{ row.total }}</td>
+            <td class="num">{% if row.ernestien %}<span class="badge badge-ens">{{ row.ernestien }}</span>{% else %}<span class="muted">–</span>{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if not ranking %}<p class="empty">Personne n'a encore attrapé cette MicroBall.</p>{% endif %}
+  </div>
+{% endblock %}
