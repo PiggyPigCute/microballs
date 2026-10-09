@@ -34,8 +34,10 @@ CLIENT_SECRET = config["client_secret"]
 REDIRECT_URI = config.get("redirect_uri", "https://microballs.chruk.fr/callback")
 DISCORD_API = "https://discord.com/api/v10"
 USER_CACHE_DURATION = timedelta(days=7)  # discord profiles older than that are fetched again
-MAX_FETCHES_PER_REQUEST = 50             # avoid slow pages when many profiles are missing
+FETCH_TIME_BUDGET = 2                    # max seconds spent fetching profiles during a page load
 LEADERBOARD_SIZE = 100
+
+discord_paused_until = 0.0  # time.time() until which discord must not be asked (rate limit)
 
 app = Flask(__name__)
 app.secret_key = config["secret_key"]
@@ -73,20 +75,38 @@ def avatar_url(user_id:int, avatar:str|None, size=64) -> str:
         return f"https://cdn.discordapp.com/avatars/{user_id}/{avatar}.png?size={size}"
     return f"https://cdn.discordapp.com/embed/avatars/{(user_id >> 22) % 6}.png"
 
-def fetch_user(user_id:int) -> dict|None:
-    # ask discord (with the bot token) for the profile of 𝑢𝑠𝑒𝑟_𝑖𝑑
-    if BOT_TOKEN is None:
-        return None
-    for _ in range(3):
-        response = requests.get(f"{DISCORD_API}/users/{user_id}", headers={"Authorization": "Bot "+BOT_TOKEN}, timeout=5)
+def fetch_user(user_id:int, wait=False) -> dict|None:
+    # ask discord (with the bot token) for the profile of 𝑢𝑠𝑒𝑟_𝑖𝑑, None if it fails
+    # → 𝑤𝑎𝑖𝑡: if True, wait when discord rate limits us (only for the "fetch-users" command)
+    #          if False, give up and stop asking discord until the end of the rate limit
+    global discord_paused_until
+    while BOT_TOKEN is not None and (wait or time.time() >= discord_paused_until):
+        try:
+            response = requests.get(f"{DISCORD_API}/users/{user_id}", headers={"Authorization": "Bot "+BOT_TOKEN}, timeout=3)
+        except requests.RequestException:
+            return None
         if response.status_code == 429:
-            time.sleep(response.json().get("retry_after", 1))
-            continue
+            retry_after = float(response.json().get("retry_after", 5))
+            if wait:
+                time.sleep(retry_after)
+                continue
+            discord_paused_until = time.time() + retry_after
+            return None
+        if response.status_code == 401:
+            # wrong token: stop asking (too many 401 can get the server banned by discord)
+            app.logger.error("Token du bot refusé par Discord, récupération des profils désactivée pendant 1h")
+            discord_paused_until = time.time() + 3600
+            return None
+        if response.headers.get("X-RateLimit-Remaining") == "0":
+            discord_paused_until = time.time() + float(response.headers.get("X-RateLimit-Reset-After", 1))
+            if wait:
+                time.sleep(discord_paused_until - time.time())
         return response.json() if response.ok else None
     return None
 
 def get_users(user_ids) -> dict[int,dict]:
     # return {user_id: {"name", "avatar_url"}}, fetching from discord the unknown or outdated profiles
+    # (at most 𝐹𝐸𝑇𝐶𝐻_𝑇𝐼𝑀𝐸_𝐵𝑈𝐷𝐺𝐸𝑇 seconds, the remaining profiles will be fetched during the next page loads)
     user_ids = {user_id for user_id in user_ids if user_id is not None}
     if not user_ids:
         return {}
@@ -94,11 +114,12 @@ def get_users(user_ids) -> dict[int,dict]:
     placeholders = ",".join("?"*len(user_ids))
     rows = {row["id"]: row for row in connection.execute(f"SELECT * FROM users WHERE id IN ({placeholders})", list(user_ids))}
     limit = datetime.now(timezone.utc) - USER_CACHE_DURATION
-    fetches = 0
+    deadline = time.monotonic() + FETCH_TIME_BUDGET
     for user_id in user_ids:
+        if time.monotonic() > deadline or time.time() < discord_paused_until:
+            break
         row = rows.get(user_id)
-        if (row is None or datetime.fromisoformat(row["updated_at"]) < limit) and fetches < MAX_FETCHES_PER_REQUEST:
-            fetches += 1
+        if row is None or datetime.fromisoformat(row["updated_at"]) < limit:
             user = fetch_user(user_id)
             if user is not None:
                 db.save_user(user_id, user["username"], user.get("global_name"), user.get("avatar"), connection)
@@ -112,6 +133,20 @@ def get_users(user_ids) -> dict[int,dict]:
             "avatar_url": avatar_url(user_id, row["avatar"] if row else None),
         }
     return users
+
+@app.cli.command("fetch-users")
+def fetch_users_command():
+    # flask --app web.app fetch-users
+    # fetch the discord profile of every player (owners and catchers), waiting when discord rate limits us
+    connection = db.connect()
+    user_ids = [row[0] for row in connection.execute(
+        "SELECT owner_id FROM microballs UNION SELECT catcher_id FROM microballs WHERE catcher_id IS NOT NULL")]
+    for i, user_id in enumerate(user_ids):
+        user = fetch_user(user_id, wait=True)
+        if user is not None:
+            db.save_user(user_id, user["username"], user.get("global_name"), user.get("avatar"), connection)
+        print(f"{i+1}/{len(user_ids)} {user_id} → {user['username'] if user else 'échec'}")
+    connection.close()
 
 # session
 def current_user() -> dict|None:

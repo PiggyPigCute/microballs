@@ -31,6 +31,14 @@ python -m venv .venv
 .venv/bin/pip install -r web/requirements.txt
 ```
 
+Puis récupérer une première fois les pseudos et avatars de tous les joueurs (quelques minutes, à cause des limites de Discord) :
+
+```sh
+.venv/bin/flask --app web.app fetch-users
+```
+
+Sans ça, les pseudos se remplissent petit à petit au fil des visites (le site ne passe jamais plus de 2 secondes à interroger Discord par page).
+
 ## 4. Lancement
 
 ```sh
