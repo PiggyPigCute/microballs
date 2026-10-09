@@ -1,5 +1,4 @@
 token.lock
 .vscode/
-event/infos/
 microballs.db*
 __pycache__/
