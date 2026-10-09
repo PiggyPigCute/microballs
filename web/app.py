@@ -12,7 +12,7 @@ import requests
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
-from flask import Flask, abort, g, redirect, render_template, request, send_from_directory, session, url_for
+from flask import Flask, abort, flash, g, redirect, render_template, request, send_from_directory, session, url_for
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -36,6 +36,7 @@ DISCORD_API = "https://discord.com/api/v10"
 USER_CACHE_DURATION = timedelta(days=7)  # discord profiles older than that are fetched again
 FETCH_TIME_BUDGET = 2                    # max seconds spent fetching profiles during a page load
 LEADERBOARD_SIZE = 100
+LOGS_CHANNEL_ID = config.get("logs_channel_id", 1463155147625467978)  # discord channel where the gifts are logged
 
 discord_paused_until = 0.0  # time.time() until which discord must not be asked (rate limit)
 
@@ -155,9 +156,19 @@ def current_user() -> dict|None:
     user_id = int(session["user_id"])
     return {"id": user_id, **get_users([user_id])[user_id]}
 
+def csrf_token() -> str:
+    # token put in every form, checked by 𝑐ℎ𝑒𝑐𝑘_𝑐𝑠𝑟𝑓() (prevents other websites from submitting forms in the name of the user)
+    if "csrf" not in session:
+        session["csrf"] = secrets.token_urlsafe(24)
+    return session["csrf"]
+
+def check_csrf():
+    if not secrets.compare_digest(request.form.get("csrf", ""), session.get("csrf", "-")):
+        abort(400)
+
 @app.context_processor
 def inject_globals():
-    return {"me": current_user(), "n_balls": len(balls)}
+    return {"me": current_user(), "n_balls": len(balls), "csrf_token": csrf_token}
 
 # pages
 @app.route("/")
@@ -198,7 +209,11 @@ def player(user_id:int):
     # types sorted from the most to the least owned, the missing ones at the end (sorted() keeps the balls.csv order for ties)
     sorted_balls = sorted(balls.items(), key=lambda item: -counts.get(item[0], 0))
     complete_sets = min(counts.get(ball_id, 0) for ball_id in balls)
-    users = get_users([row["catcher_id"] for row in rows] + [user_id])
+    # last gift received for each MicroBall currently owned
+    received = {row["microball_id"]: row for row in get_db().execute(
+        "SELECT t.microball_id, t.from_id, t.transferred_at FROM transfers t JOIN microballs m ON m.id = t.microball_id "
+        "WHERE m.owner_id = ? AND t.to_id = ? ORDER BY t.id", (user_id, user_id))}
+    users = get_users([row["catcher_id"] for row in rows] + [row["from_id"] for row in received.values()] + [user_id])
     microballs = []
     old_groups = {}  # the old MicroBalls (no catcher, no date) are grouped by type and language
     for row in rows:
@@ -214,13 +229,102 @@ def player(user_id:int):
             "name": ball["nom_ens_transcrit"] if row["language"] == "ens" and ball["nom_ens_transcrit"] else ball["nom_fr"],
             "catcher": users.get(row["catcher_id"]), "catcher_is_me": row["catcher_id"] == viewer_id,
             "caught_at": datetime.fromisoformat(row["caught_at"]) if row["caught_at"] else None,
+            "received_from": None, "received_at": None,
         }
+        if row["id"] in received and not (row["caught_at"] is None and row["catcher_id"] is None):
+            microball["received_from"] = users.get(received[row["id"]]["from_id"])
+            microball["received_at"] = datetime.fromisoformat(received[row["id"]]["transferred_at"])
         if row["caught_at"] is None and row["catcher_id"] is None:
             old_groups[(row["ball_type"], row["language"])] = microball
         microballs.append(microball)
     return render_template("collection.html", balls=balls, sorted_balls=sorted_balls, counts=counts, microballs=microballs,
                            n_microballs=len(rows), n_ernestien=sum(row["language"] == "ens" for row in rows),
-                           complete_sets=complete_sets, player={"id": user_id, **users[user_id]}, is_mine=user_id == viewer_id)
+                           complete_sets=complete_sets, player={"id": user_id, **users[user_id]}, is_mine=user_id == viewer_id,
+                           recipients=get_recipients(viewer_id) if user_id == viewer_id else [])
+
+# gifts
+def get_recipients(viewer_id:int) -> list[dict]:
+    # every known player except 𝑣𝑖𝑒𝑤𝑒𝑟_𝑖𝑑, for the autocompletion of the gift form
+    return [dict(row) for row in get_db().execute(
+        "SELECT id, username, global_name FROM users WHERE id != ? ORDER BY COALESCE(global_name, username) COLLATE NOCASE", (viewer_id,))]
+
+def find_recipient(text:str) -> int|None:
+    # find a player from what was typed in the gift form: "@username", "username", display name or discord id
+    text = text.strip().removeprefix("@").strip()
+    if not text:
+        return None
+    connection = get_db()
+    if text.isdigit() and 17 <= len(text) <= 20:
+        user_id = int(text)
+        if connection.execute("SELECT 1 FROM users WHERE id = ?", (user_id,)).fetchone():
+            return user_id
+        user = fetch_user(user_id)
+        if user is None:
+            return None
+        db.save_user(user_id, user["username"], user.get("global_name"), user.get("avatar"), connection)
+        return user_id
+    row = connection.execute("SELECT id FROM users WHERE username = ? COLLATE NOCASE", (text,)).fetchone()
+    if row:
+        return row[0]
+    rows = connection.execute("SELECT id FROM users WHERE global_name = ? COLLATE NOCASE", (text,)).fetchall()
+    return rows[0][0] if len(rows) == 1 else None  # several players with this display name: ambiguous
+
+def log_discord(text:str):
+    # send a log in the discord logs channel (best effort, a failure doesn't prevent the gift)
+    if BOT_TOKEN is None:
+        return
+    try:
+        requests.post(f"{DISCORD_API}/channels/{LOGS_CHANNEL_ID}/messages", json={"content": text, "allowed_mentions": {"parse": []}},
+                      headers={"Authorization": "Bot "+BOT_TOKEN}, timeout=3)
+    except requests.RequestException:
+        pass
+
+@app.post("/donner")
+def give():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+    check_csrf()
+    sender_id = int(session["user_id"])
+    back = redirect(url_for("player", user_id=sender_id))
+
+    recipient_id = find_recipient(request.form.get("recipient", ""))
+    if recipient_id is None:
+        flash("Joueur·euse introuvable : choisis un nom dans la liste ou colle son identifiant Discord.", "error")
+        return back
+    if recipient_id == sender_id:
+        flash("Tu ne peux pas te donner des MicroBalls à toi-même.", "error")
+        return back
+
+    # selection: "mb" = ids of recent MicroBalls, "old:<type>:<language>" = amount of old MicroBalls of this group
+    try:
+        microball_ids = [int(value) for value in request.form.getlist("mb")]
+        old_groups = {}
+        for key, value in request.form.items():
+            if key.startswith("old:") and value.strip() not in ("", "0"):
+                _, ball_type, language = key.split(":", 2)
+                if int(value) < 0: raise ValueError
+                old_groups[(ball_type, language)] = int(value)
+    except ValueError:
+        abort(400)
+    if not microball_ids and not old_groups:
+        flash("Sélectionne au moins une MicroBall à donner.", "error")
+        return back
+
+    given = db.give_balls(sender_id, recipient_id, microball_ids, old_groups, get_db())
+    if given is None:
+        flash("Le don a échoué : certaines MicroBalls ne sont plus dans ta collection. Rien n'a été donné.", "error")
+        return back
+
+    users = get_users([sender_id, recipient_id])
+    n = len(given)
+    flash(f"🎁 Tu as donné {n} MicroBall{'s' if n > 1 else ''} à {users[recipient_id]['name']} !", "success")
+    types = {}
+    for row in get_db().execute(f"SELECT ball_type, language FROM microballs WHERE id IN ({','.join('?'*n)})", given):
+        types[(row["ball_type"], row["language"])] = types.get((row["ball_type"], row["language"]), 0)+1
+    log_discord(" 🪵 🎁 cadeau (site) │ sender: "+str(users[sender_id]["username"])+" │ to: "+str(users[recipient_id]["username"])+" │ "
+                +", ".join(f"{ball_type}{' 🐠' if language == 'ens' else ''}×{amount}" for (ball_type, language), amount in types.items())
+                +" │ microball_ids: "+(",".join(map(str, given)) if n <= 100 else f"{n} balles"))
+    return back
 
 @app.route("/img/<path:filename>")
 def ball_image(filename):

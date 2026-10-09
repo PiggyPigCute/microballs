@@ -66,10 +66,15 @@
     </div>
 
     {% if microballs %}
+      {% if is_mine %}
+      <form method="post" action="{{ url_for('give') }}" id="gift-form">
+        <input type="hidden" name="csrf" value="{{ csrf_token() }}">
+      {% endif %}
       <div class="card table-card">
         <table class="table" id="detail">
           <thead>
             <tr>
+              {% if is_mine %}<th class="select-col" title="Sélectionner pour donner">🎁</th>{% endif %}
               <th>MicroBall</th>
               <th>Langue</th>
               <th class="hide-sm">Attrapée par</th>
@@ -80,6 +85,15 @@
           <tbody>
             {% for mb in microballs %}
               <tr data-type="{{ mb.type }}" data-language="{{ mb.language }}" data-age="{{ 'new' if mb.caught_at else 'old' }}">
+                {% if is_mine %}
+                  <td class="select-col">
+                    {% if mb.amount > 1 or not mb.caught_at %}
+                      <input class="gift-amount" type="number" name="old:{{ mb.type }}:{{ mb.language }}" min="0" max="{{ mb.amount }}" value="0" inputmode="numeric" aria-label="Nombre à donner">
+                    {% else %}
+                      <input class="gift-check" type="checkbox" name="mb" value="{{ mb.id }}" aria-label="Donner cette MicroBall">
+                    {% endif %}
+                  </td>
+                {% endif %}
                 <td>
                   <div class="player">
                     {% if mb.ball.img %}<img class="ball-icon" src="{{ url_for('ball_image', filename=mb.ball.img ~ '.png') }}" alt="" loading="lazy">{% endif %}
@@ -99,6 +113,9 @@
                   {% else %}
                     <span class="muted">–</span>
                   {% endif %}
+                  {% if mb.received_from %}
+                    <div class="muted small">offerte par {{ mb.received_from.name }} le {{ mb.received_at | date_fr }}</div>
+                  {% endif %}
                 </td>
                 <td>
                   {% if mb.caught_at %}{{ mb.caught_at | date_fr }}{% else %}<span class="badge badge-old">Ancienne</span>{% endif %}
@@ -110,6 +127,20 @@
         </table>
         <p class="empty" id="no-result" hidden>Aucune MicroBall ne correspond à ces filtres.</p>
       </div>
+      {% if is_mine %}
+        <div class="gift-bar card" id="gift-bar" hidden>
+          <span class="gift-count"><strong id="gift-count">0</strong> MicroBall<span id="gift-plural"></span> sélectionnée<span id="gift-plural-2"></span></span>
+          <input type="text" name="recipient" id="gift-recipient" list="recipients" placeholder="Donner à… (pseudo ou identifiant Discord)" autocomplete="off" required>
+          <datalist id="recipients">
+            {% for user in recipients %}
+              <option value="@{{ user.username }}">{{ user.global_name or user.username }}</option>
+            {% endfor %}
+          </datalist>
+          <button class="btn btn-primary" type="submit">Donner</button>
+          <button class="btn btn-ghost" type="button" id="gift-reset">Annuler</button>
+        </div>
+      </form>
+      {% endif %}
       <p class="muted small">Les MicroBalls « anciennes » ont été attrapées avant le passage à la nouvelle base de données : on ne sait pas qui les a attrapées ni quand, elles sont donc regroupées par type et par langue.</p>
     {% else %}
       <div class="card"><p class="empty">{% if is_mine %}Tu n'as encore attrapé aucune MicroBall. Elles apparaissent quand les serveurs où se trouve le bot sont actifs !{% else %}{{ player.name }} n'a aucune MicroBall.{% endif %}</p></div>
@@ -139,5 +170,42 @@
     applyFilters();
     document.getElementById("detail").scrollIntoView({behavior: "smooth", block: "start"});
   }));
+
+  // gifts
+  const giftForm = document.getElementById("gift-form");
+  if (giftForm) {
+    const bar = document.getElementById("gift-bar");
+    const inputs = giftForm.querySelectorAll(".gift-amount, .gift-check");
+
+    function selectedAmount() {
+      let total = 0;
+      inputs.forEach(input => {
+        if (input.type === "checkbox") total += input.checked ? 1 : 0;
+        else total += Math.min(Math.max(parseInt(input.value) || 0, 0), parseInt(input.max));
+      });
+      return total;
+    }
+
+    function updateBar() {
+      const n = selectedAmount();
+      bar.hidden = n === 0;
+      document.getElementById("gift-count").textContent = n;
+      document.getElementById("gift-plural").textContent = n > 1 ? "s" : "";
+      document.getElementById("gift-plural-2").textContent = n > 1 ? "s" : "";
+      inputs.forEach(input => input.closest("tr").classList.toggle("is-selected", input.type === "checkbox" ? input.checked : (parseInt(input.value) || 0) > 0));
+    }
+
+    inputs.forEach(input => input.addEventListener("input", updateBar));
+    document.getElementById("gift-reset").addEventListener("click", () => {
+      inputs.forEach(input => input.type === "checkbox" ? input.checked = false : input.value = 0);
+      updateBar();
+    });
+    giftForm.addEventListener("submit", event => {
+      const n = selectedAmount();
+      const recipient = document.getElementById("gift-recipient").value.trim();
+      if (!confirm(`Donner ${n} MicroBall${n > 1 ? "s" : ""} à ${recipient} ? Ce n'est pas annulable.`)) event.preventDefault();
+    });
+    updateBar();
+  }
 </script>
 {% endblock %}

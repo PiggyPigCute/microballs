@@ -11,6 +11,8 @@
   --ens-soft: #fdf3d3;
   --discord: #5865f2;
   --gold: #f5c518;
+  --error: #c92a2a;
+  --error-soft: #fde8e8;
   --radius: 14px;
   --shadow: 0 1px 2px rgb(20 30 60 / 6%), 0 4px 16px rgb(20 30 60 / 5%);
   color-scheme: light;
@@ -28,6 +30,8 @@
     --primary-soft: #262e52;
     --ens: #f2c94c;
     --ens-soft: #3a3118;
+    --error: #ff8787;
+    --error-soft: #3d1f22;
     --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 4px 16px rgb(0 0 0 / 25%);
     color-scheme: dark;
   }
@@ -112,6 +116,8 @@ a { color: var(--primary); }
 }
 .btn-discord { background: var(--discord); color: #fff; }
 .btn-discord:hover { filter: brightness(1.1); }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { filter: brightness(1.1); }
 .btn-ghost { background: transparent; color: var(--muted); }
 .btn-ghost:hover { background: var(--surface-2); color: var(--text); }
 
@@ -265,3 +271,47 @@ a { color: var(--primary); }
 }
 
 .amount { color: var(--muted); font-weight: 600; font-size: 0.85rem; }
+
+/* flash messages */
+.flash { margin-top: 20px; padding: 12px 16px; border-radius: var(--radius); font-weight: 600; }
+.flash-success { background: var(--primary-soft); color: var(--primary); }
+.flash-error { background: var(--error-soft); color: var(--error); }
+
+/* gifts */
+.select-col { width: 72px; text-align: center !important; }
+.gift-amount {
+  width: 60px;
+  font: inherit;
+  padding: 4px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  text-align: center;
+}
+.gift-check { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
+.table tr.is-selected td { background: var(--primary-soft); }
+.gift-bar {
+  position: sticky;
+  bottom: 16px;
+  margin-top: 16px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  z-index: 5;
+  box-shadow: 0 8px 30px rgb(20 30 60 / 18%);
+}
+.gift-bar[hidden] { display: none; }
+.gift-count { white-space: nowrap; }
+.gift-bar input[type="text"] {
+  flex: 1;
+  min-width: 200px;
+  font: inherit;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}

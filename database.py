@@ -32,6 +32,16 @@ CREATE TABLE IF NOT EXISTS spawn_channels (
     special    TEXT
 );
 
+-- history of the MicroBalls given from a player to another
+CREATE TABLE IF NOT EXISTS transfers (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    microball_id   INTEGER NOT NULL REFERENCES microballs(id),
+    from_id        INTEGER NOT NULL,
+    to_id          INTEGER NOT NULL,
+    transferred_at TEXT    NOT NULL                       -- ISO 8601 UTC date
+);
+CREATE INDEX IF NOT EXISTS transfers_microball ON transfers(microball_id);
+
 -- discord profiles, used by the website to display names and avatars
 CREATE TABLE IF NOT EXISTS users (
     id          INTEGER PRIMARY KEY,
@@ -88,23 +98,42 @@ def count_balls(owner_id:int, language:str|None=None) -> dict[str,int]:
         params.append(language)
     return dict(con.execute(query+" GROUP BY ball_type", params).fetchall())
 
-def count_languages(owner_id:int, ball_type:str) -> dict[str,int]:
-    # return {language: amount} of the MicroBalls of type 𝑏𝑎𝑙𝑙_𝑡𝑦𝑝𝑒 owned by 𝑜𝑤𝑛𝑒𝑟_𝑖𝑑
-    return dict(con.execute(
-        "SELECT language, COUNT(*) FROM microballs WHERE owner_id = ? AND ball_type = ? GROUP BY language",
-        (owner_id, ball_type)).fetchall())
-
-def transfer_ball(ball_type:str, language:str, from_id:int, to_id:int) -> int|None:
-    # give one MicroBall of type 𝑏𝑎𝑙𝑙_𝑡𝑦𝑝𝑒 caught in 𝑙𝑎𝑛𝑔𝑢𝑎𝑔𝑒 from 𝑓𝑟𝑜𝑚_𝑖𝑑 to 𝑡𝑜_𝑖𝑑
-    # return the id of the transferred MicroBall, or None if 𝑓𝑟𝑜𝑚_𝑖𝑑 doesn't have any
-    with con:
-        row = con.execute(
-            "SELECT id FROM microballs WHERE owner_id = ? AND ball_type = ? AND language = ? ORDER BY id DESC LIMIT 1",
-            (from_id, ball_type, language)).fetchone()
-        if row is None:
-            return None
-        con.execute("UPDATE microballs SET owner_id = ? WHERE id = ?", (to_id, row[0]))
-    return row[0]
+def give_balls(from_id:int, to_id:int, microball_ids:list[int], old_groups:dict[tuple[str,str],int],
+               connection:sqlite3.Connection|None=None) -> list[int]|None:
+    # give MicroBalls from 𝑓𝑟𝑜𝑚_𝑖𝑑 to 𝑡𝑜_𝑖𝑑 and record it in the 𝑡𝑟𝑎𝑛𝑠𝑓𝑒𝑟𝑠 table, all or nothing
+    # → 𝑚𝑖𝑐𝑟𝑜𝑏𝑎𝑙𝑙_𝑖𝑑𝑠: ids of the MicroBalls to give
+    # → 𝑜𝑙𝑑_𝑔𝑟𝑜𝑢𝑝𝑠: {(ball_type, language): amount} of old MicroBalls (no catcher, no date) to give
+    # return the ids of the given MicroBalls, or None if 𝑓𝑟𝑜𝑚_𝑖𝑑 doesn't own all of them (nothing is given)
+    connection = connection or con
+    if connection.in_transaction:
+        connection.commit()
+    connection.execute("BEGIN IMMEDIATE")  # lock the database: the balls can't change owner between the check and the update
+    try:
+        ids = list(dict.fromkeys(microball_ids))
+        if ids:
+            placeholders = ",".join("?"*len(ids))
+            owned = connection.execute(f"SELECT COUNT(*) FROM microballs WHERE owner_id = ? AND id IN ({placeholders})",
+                                       [from_id]+ids).fetchone()[0]
+            if owned != len(ids):
+                connection.rollback()
+                return None
+        for (ball_type, language), amount in old_groups.items():
+            rows = connection.execute(
+                "SELECT id FROM microballs WHERE owner_id = ? AND ball_type = ? AND language = ? AND catcher_id IS NULL AND caught_at IS NULL "
+                "ORDER BY id LIMIT ?", (from_id, ball_type, language, amount)).fetchall()
+            if len(rows) < amount:
+                connection.rollback()
+                return None
+            ids += [row[0] for row in rows]
+        date = now()
+        connection.executemany("UPDATE microballs SET owner_id = ? WHERE id = ?", [(to_id, i) for i in ids])
+        connection.executemany("INSERT INTO transfers (microball_id, from_id, to_id, transferred_at) VALUES (?, ?, ?, ?)",
+                               [(i, from_id, to_id, date) for i in ids])
+        connection.commit()
+        return ids
+    except BaseException:
+        connection.rollback()
+        raise
 
 # spawn channels
 def get_spawn_channels() -> dict[int,int]:
