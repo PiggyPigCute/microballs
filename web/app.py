@@ -335,6 +335,7 @@ def by_type():
     types = [{"id": ball_id, "ball": ball, "total": stats[ball_id]["total"] if ball_id in stats else 0,
               "ernestien": stats[ball_id]["ernestien"] if ball_id in stats else 0,
               "owners": stats[ball_id]["owners"] if ball_id in stats else 0} for ball_id, ball in balls.items()]
+    types.sort(key=lambda t: -t["total"])  # most caught first (sort() keeps the balls.csv order for ties)
     return render_template("bytype.html", types=types, max_total=max([t["total"] for t in types] + [1]),
                            n_total=sum(t["total"] for t in types))
 
